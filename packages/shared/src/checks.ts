@@ -130,19 +130,12 @@ export function a11yCheck(document: DocumentState): CheckResult {
       previousLevel = level;
     }
 
-    if (block.type === 'image') {
-      const alt = typeof block.attrs?.alt === 'string' ? block.attrs.alt.trim() : '';
-      if (!alt) {
-        issues.push({
-          rule: 'image-alt-missing',
-          severity: 'error',
-          message:
-            'An image has no alt text. Describe what the image shows, or mark it as decorative.',
-          blockId: block.blockId,
-        });
-      }
-    }
-    for (const image of inlineImages(block.text)) {
+    // An image block is `![alt](src)` (or carries `attrs.alt`); inline images can sit in any text.
+    const images =
+      block.type === 'image' && typeof block.attrs?.alt === 'string'
+        ? [{ alt: block.attrs.alt.trim() }]
+        : inlineImages(block.text);
+    for (const image of images) {
       if (!image.alt) {
         issues.push({
           rule: 'image-alt-missing',

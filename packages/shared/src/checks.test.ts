@@ -55,6 +55,7 @@ describe('a11yCheck', () => {
       doc([
         { blockId: 'i1', type: 'image', text: '', attrs: { src: 'a.png', alt: '' } },
         { blockId: 'i2', type: 'image', text: '', attrs: { src: 'b.png', alt: 'A bar chart' } },
+        { blockId: 'i3', type: 'image', text: '![A line chart](c.png)' },
         p('p1', 'Inline ![](c.png) image.'),
       ]),
     );

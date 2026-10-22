@@ -13,6 +13,7 @@
     "@margin/agent-panel": "workspace:*",
     "@margin/shared": "workspace:*",
     "@tiptap/core": "3.32.0",
+    "@tiptap/extension-image": "3.32.0",
     "@tiptap/extension-unique-id": "3.32.0",
     "@tiptap/markdown": "3.32.0",
     "@tiptap/pm": "3.32.0",

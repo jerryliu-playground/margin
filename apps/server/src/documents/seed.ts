@@ -30,6 +30,8 @@ export function seedIfEmpty(repo: DocumentRepository): void {
             'seed-p1',
             'People do not read web pages word by word. They scan them, looking for the part that answers their question, and they leave as soon as they think it is not there.',
           ),
+          // No alt text on purpose: the accessibility check should find it (SPEC feature 7).
+          { type: 'image', attrs: { id: 'seed-img1', src: '/sample-chart.svg', alt: null } },
           paragraph(
             'seed-p2',
             'In order to make sure that your readers are actually able to find what it is that they are looking for, it is generally a good idea to try to keep your sentences fairly short and to the point whenever that is possible.',
