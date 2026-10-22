@@ -6,6 +6,7 @@ export function testRequest(messages: AgentRunRequest['messages']): AgentRunRequ
     threadId: 'thread-1',
     runId: 'run-1',
     tools: frontendToolDefinitions(),
+    context: [],
     state: {
       schema: [
         { name: 'title', label: 'Title', kind: 'text', maxLength: 200 },

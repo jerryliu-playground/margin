@@ -235,6 +235,10 @@ export function scriptedReply(request: AgentRunRequest, prompt: LanguageModelV4P
       ],
     };
   }
+  // Editor events (AG-UI context): acknowledge an undo instead of being confused by it.
+  if (request.context.some((c) => c.value.includes('undid'))) {
+    return { text: 'I see you undid my last change, so I am working from the current document.' };
+  }
   return {
     text: 'I can write a meta description, suggest a title or tags, or tighten a paragraph.',
   };

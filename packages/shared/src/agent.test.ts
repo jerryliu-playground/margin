@@ -45,6 +45,16 @@ describe('agentRunRequestSchema', () => {
     expect(agentRunRequestSchema.safeParse(rest).success).toBe(false);
   });
 
+  it('accepts AG-UI context and caps its size', () => {
+    const context = [
+      { description: 'Editor events since your last turn', value: 'The user undid…' },
+    ];
+    expect(agentRunRequestSchema.parse({ ...base, context }).context).toEqual(context);
+    expect(agentRunRequestSchema.parse(base).context).toEqual([]);
+    const tooLong = [{ description: 'x', value: 'y'.repeat(2001) }];
+    expect(agentRunRequestSchema.safeParse({ ...base, context: tooLong }).success).toBe(false);
+  });
+
   it('keeps unknown AG-UI fields (loose objects)', () => {
     const parsed = agentRunRequestSchema.parse({ ...base, forwardedProps: { x: 1 } });
     expect(parsed).toHaveProperty('forwardedProps');

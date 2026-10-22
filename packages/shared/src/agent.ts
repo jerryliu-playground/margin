@@ -48,6 +48,15 @@ export const agentToolSchema = z.looseObject({
   parameters: z.record(z.string(), z.unknown()).optional(),
 });
 
+export const agentContextSchema = z.looseObject({
+  description: z.string().min(1).max(200),
+  value: z.string().max(2000),
+});
+export type AgentContext = z.infer<typeof agentContextSchema>;
+
+/** The description the panel uses for editor events since the agent's last turn. */
+export const EDITOR_EVENTS_CONTEXT = 'Editor events since your last turn';
+
 /** POST /agent body: the subset of AG-UI `RunAgentInput` that Margin uses. */
 export const agentRunRequestSchema = z.looseObject({
   threadId: z.string().min(1),
@@ -55,5 +64,7 @@ export const agentRunRequestSchema = z.looseObject({
   state: agentStateSchema,
   messages: z.array(agentMessageSchema).min(1).max(AGENT_LIMITS.messages),
   tools: z.array(agentToolSchema).max(AGENT_LIMITS.tools).default([]),
+  /** AG-UI `context`: facts from the editor, e.g. that the user undid an accepted proposal. */
+  context: z.array(agentContextSchema).max(10).default([]),
 });
 export type AgentRunRequest = z.infer<typeof agentRunRequestSchema>;

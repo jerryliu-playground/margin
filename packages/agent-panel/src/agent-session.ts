@@ -1,5 +1,6 @@
 import { HttpAgent, type AbstractAgent, type AgentSubscriber, type Message } from '@ag-ui/client';
 import {
+  EDITOR_EVENTS_CONTEXT,
   apiErrorSchema,
   frontendToolDefinitions,
   hashBlockText,
@@ -67,6 +68,8 @@ export function createAgentSession({ host, agentUrl, createAgent }: AgentSession
   let batch: string[] = [];
   const answers = new Map<string, string>();
   let invalidStreak = 0;
+  /** Things the user did that the agent cannot see in the history (undos), sent with the next run. */
+  const editorEvents: string[] = [];
 
   const update = (patch: Partial<SessionSnapshot>) => {
     snapshot = { ...snapshot, ...patch };
@@ -115,7 +118,18 @@ export function createAgentSession({ host, agentUrl, createAgent }: AgentSession
       }
       const state: AgentState = { schema: host.getSchema(), document: host.getState() };
       agent.setState(state);
-      await agent.runAgent({ runId: newId('run'), tools: frontendToolDefinitions() }, subscriber);
+      // Editor events (undos) go along once, as AG-UI context, then are cleared.
+      const events = editorEvents.splice(0);
+      await agent.runAgent(
+        {
+          runId: newId('run'),
+          tools: frontendToolDefinitions(),
+          context: events.length
+            ? [{ description: EDITOR_EVENTS_CONTEXT, value: events.join('\n') }]
+            : [],
+        },
+        subscriber,
+      );
     } catch (error) {
       update({
         error:
@@ -289,6 +303,11 @@ export function createAgentSession({ host, agentUrl, createAgent }: AgentSession
           });
         }
         patch({ status: 'undone', undoError: undefined });
+        editorEvents.push(
+          proposal.kind === 'field'
+            ? `The user undid your accepted proposal for the field "${proposal.field}"; it is back to its previous value.`
+            : `The user undid your accepted edit to block ${proposal.blockId}; it is back to its previous content.`,
+        );
       } catch (error) {
         patch({ undoError: `Could not undo: ${(error as Error).message}` });
       }

@@ -92,7 +92,7 @@ export async function* runAgent({
   try {
     const result = streamText({
       model,
-      system: systemPrompt(request.state),
+      system: systemPrompt(request.state, request.context),
       messages: toModelMessages(request.messages),
       tools: toolSet(request),
       maxOutputTokens,
