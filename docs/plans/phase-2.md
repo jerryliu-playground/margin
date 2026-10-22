@@ -16,7 +16,7 @@ Approved by the owner on 2026-10-22. One commit per step; each step passes `pnpm
 ## Steps
 
 - [x] **P2.1 `add-document-field` skill** — schema → DB migration → editor UI → agent awareness → tests. `.claude/skills/add-document-field/SKILL.md`.
-- [ ] **P2.2 Check contracts and pure checks** — zod input/output schemas for `a11yCheck` and `seoCheck`, pure check functions, unit tests. `packages/shared`.
+- [x] **P2.2 Check contracts and pure checks** — zod input/output schemas for `a11yCheck` and `seoCheck`, pure check functions, unit tests. `packages/shared`.
 - [ ] **P2.3 Image blocks** — Image extension (block, `alt`), BodyBlock round trip (`![alt](src)` or attrs), seed image without alt, jsdom tests. `apps/web`, `apps/server/src/documents/seed.ts`.
 - [ ] **P2.4 Server tools and multi-step runs** — tools with `execute` run on the server; results stream as `TOOL_CALL_RESULT`; the model continues in the same run (`stopWhen`); history with server tool calls converts correctly; mock-model scripts for "check accessibility" and "check SEO". Tests check every event against the AG-UI `EventSchema`. `apps/server`.
 - [ ] **P2.5 Panel shows checks** — activity "Checking accessibility…" / "Checking SEO…", a short issue list in the conversation; fixes still arrive as proposal cards. Unit + e2e. `packages/agent-panel`.
