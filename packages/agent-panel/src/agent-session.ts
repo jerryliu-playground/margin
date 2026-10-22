@@ -119,8 +119,9 @@ export function createAgentSession({ host, agentUrl, createAgent }: AgentSession
       }
       const state: AgentState = { schema: host.getSchema(), document: host.getState() };
       agent.setState(state);
-      // Editor events (undos) go along once, as AG-UI context, then are cleared.
-      const events = editorEvents.splice(0);
+      // Editor events (undos) go along as AG-UI context; they are cleared only after a
+      // run that succeeded, so a failed run does not lose them.
+      const events = [...editorEvents];
       await agent.runAgent(
         {
           runId: newId('run'),
@@ -131,6 +132,7 @@ export function createAgentSession({ host, agentUrl, createAgent }: AgentSession
         },
         subscriber,
       );
+      if (!snapshot.error) editorEvents.splice(0, events.length);
     } catch (error) {
       update({
         error:
