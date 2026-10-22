@@ -155,7 +155,9 @@ describe('runAgent', () => {
       .filter((e) => e.type === EventType.TEXT_MESSAGE_CONTENT)
       .map((e) => (e as BaseEvent & { delta: string }).delta)
       .join('');
-    expect(text).toContain('Accessibility check: Found 1 error.');
+    expect(text).toContain('I propose 1 fix.');
+    // The issue list is in the check result; the reply does not repeat it.
+    expect(text).not.toContain('An image has no alt text');
     // Only the proposal waits for the browser; the check answered itself.
     expect(events.at(-1)).toMatchObject({
       outcome: { pendingToolCallIds: [starts[1]?.toolCallId] },

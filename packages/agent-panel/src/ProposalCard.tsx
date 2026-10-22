@@ -1,6 +1,11 @@
 import { diffWords } from '@margin/shared';
 import { useId, useState } from 'react';
-import { fieldValueText, type Proposal, type ProposalStatus } from './proposals';
+import {
+  fieldValueText,
+  parseImageMarkdown,
+  type Proposal,
+  type ProposalStatus,
+} from './proposals';
 
 interface ProposalCardProps {
   proposal: Proposal;
@@ -45,6 +50,40 @@ function Diff({ before, after }: { before: string; after: string }) {
   );
 }
 
+/**
+ * An image edit shown as a thumbnail and an alt text diff, not raw Markdown.
+ * The thumbnail uses the src the host had before the edit, never a URL from the agent.
+ */
+function ImageDiff({ before, after }: { before: string; after: string }) {
+  const old = parseImageMarkdown(before);
+  const next = parseImageMarkdown(after);
+  if (!old || !next) return <Diff before={before} after={after} />;
+  return (
+    <div className="margin-proposal__image">
+      <img src={old.src} alt="" className="margin-proposal__thumb" />
+      <div>
+        <p className="margin-proposal__label">Alt text</p>
+        {old.alt ? (
+          <Diff before={old.alt} after={next.alt} />
+        ) : (
+          <p className="margin-proposal__diff">
+            <span className="margin-proposal__none">(none)</span>{' '}
+            <ins>
+              <span className="margin-sr">added: </span>
+              {next.alt}
+            </ins>
+          </p>
+        )}
+        {next.src !== old.src && (
+          <p className="margin-proposal__warning">
+            This also changes the image source to {next.src}.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /** One proposal: old vs new, the agent's reason, Accept / Reject, and Undo once accepted. */
 export function ProposalCard({
   proposal,
@@ -71,7 +110,11 @@ export function ProposalCard({
         {title}
       </h3>
       <p className="margin-proposal__reason">{proposal.reason}</p>
-      <Diff before={before} after={after} />
+      {proposal.kind === 'body' && proposal.blockType === 'image' ? (
+        <ImageDiff before={before} after={after} />
+      ) : (
+        <Diff before={before} after={after} />
+      )}
       {pending && outdated && (
         <p className="margin-proposal__warning" role="alert">
           This block changed after the proposal was made, so it can no longer be applied.

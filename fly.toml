@@ -1,0 +1,42 @@
+# Fly.io config for the public demo (ADR 0009). Change `app` to a name you own before the
+# first deploy; `primary_region` is where the machine and its volume live.
+app = "margin-demo"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  MARGIN_MODEL = "anthropic"
+  MARGIN_DB_PATH = "/data/margin.db"
+  WEB_ORIGIN = "https://margin-demo.fly.dev"
+  # Public-demo protection (apps/server/src/demo.ts)
+  TRUST_PROXY = "true"
+  DAILY_AGENT_RUN_LIMIT = "300"
+  MAX_DOCUMENTS = "200"
+  DEMO_RESET_HOUR_UTC = "10"
+  # Set with `fly secrets set`, never here: ANTHROPIC_API_KEY, MARGIN_TOKEN_SECRET
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  # Always on: interview demos should not wait for a cold start.
+  auto_stop_machines = "off"
+  auto_start_machines = false
+  min_machines_running = 1
+
+[[http_service.checks]]
+  grace_period = "15s"
+  interval = "30s"
+  method = "GET"
+  timeout = "5s"
+  path = "/health"
+
+[mounts]
+  source = "margin_data"
+  destination = "/data"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

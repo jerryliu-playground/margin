@@ -9,12 +9,19 @@ import type { FastifyInstance } from 'fastify';
 import { HttpError, parseOr400 } from '../errors';
 import type { DocumentRepository } from './repository';
 
-export function documentRoutes(repo: DocumentRepository) {
+export function documentRoutes(repo: DocumentRepository, maxDocuments: number) {
   return async (app: FastifyInstance) => {
     app.get('/documents', async (): Promise<DocumentListResponse> => ({ documents: repo.list() }));
 
     app.post('/documents', async (req, reply): Promise<Document> => {
       const input = parseOr400(createDocumentRequestSchema, req.body ?? {});
+      if (repo.count() >= maxDocuments) {
+        throw new HttpError(
+          409,
+          'document_limit',
+          'This demo holds as many documents as it can. Edit an existing one.',
+        );
+      }
       reply.code(201);
       return repo.create(input);
     });

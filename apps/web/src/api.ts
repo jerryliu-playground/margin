@@ -9,7 +9,9 @@ import {
 } from '@margin/shared';
 import type { z } from 'zod';
 
-export const AGENT_URL = import.meta.env.VITE_AGENT_URL ?? 'http://localhost:8790';
+/** Same origin in production (the server serves the app); the dev server's port in dev. */
+export const AGENT_URL =
+  import.meta.env.VITE_AGENT_URL ?? (import.meta.env.PROD ? '' : 'http://localhost:8790');
 
 let cached: { token: string; expiresAt: number } | undefined;
 

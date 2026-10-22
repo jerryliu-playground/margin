@@ -25,3 +25,51 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the production image
+        run: docker build -t margin:ci .
+      - name: Smoke test the image (mock model, no API key)
+        run: |
+          docker run -d --name margin -p 8080:8080 \
+            -e MARGIN_MODEL=mock \
+            -e MARGIN_TOKEN_SECRET=ci-only-secret-that-is-at-least-32-chars \
+            -e MARGIN_DB_PATH=/tmp/margin.db \
+            margin:ci
+          for i in $(seq 1 30); do curl -fs http://localhost:8080/health && break; sleep 1; done
+          curl -fs http://localhost:8080/health | grep -q '"ok"'
+          curl -fs http://localhost:8080/ | grep -q 'id="root"'
+          curl -fs -X POST http://localhost:8080/auth/token | grep -q '"token"'
+      - name: Container logs
+        if: always()
+        run: docker logs margin || true
+
+  deploy:
+    # Only from main, only after the checks and the image smoke test pass (ADR 0009).
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [check, image]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    env:
+      HAS_TOKEN: ${{ secrets.FLY_API_TOKEN != '' }}
+    steps:
+      - name: Skip without a Fly token
+        if: env.HAS_TOKEN != 'true'
+        run: echo "FLY_API_TOKEN is not set; skipping the deploy."
+      - uses: actions/checkout@v4
+        if: env.HAS_TOKEN == 'true'
+      # Pinned to a commit: superfly/flyctl-actions 1.5
+      - uses: superfly/flyctl-actions/setup-flyctl@fc53c09e1bc3be6f54706524e3b82c4f462f77be
+        if: env.HAS_TOKEN == 'true'
+      - name: Deploy to Fly.io
+        if: env.HAS_TOKEN == 'true'
+        run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

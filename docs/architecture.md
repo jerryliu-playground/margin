@@ -69,7 +69,14 @@ Approval rules the session enforces:
 - A turn's proposals are answered together: the next run starts when every tool call of the turn has an answer.
 - An invalid tool call is never shown; it is answered `rejected` with the validation error. More than two all-invalid turns in a row stop with an error.
 - A body proposal whose block changed (hash differs from `baseHash`) cannot be accepted; dismissing it answers `stale`.
+- Accept all / Reject all (shown when two or more proposals are pending) answer each pending proposal through the same accept/reject path, so outdated ones become `stale` and the run continues once.
 - Undo restores the value from before the proposal, only if the field value or the block's hash is unchanged since Accept (`canUndo` in `proposals.ts`). It sends nothing to the agent.
+
+## Public demo protection (apps/server/src/demo.ts)
+
+- Per-IP rate limits on every route (`@fastify/rate-limit`); behind a proxy `TRUST_PROXY=true` makes them see the real client IP.
+- A global cap on agent runs per UTC day (`DAILY_AGENT_RUN_LIMIT`), answered with a plain 429 that the panel shows as is.
+- A cap on stored documents (`MAX_DOCUMENTS`), and an optional nightly reset to the seeded article (`DEMO_RESET_HOUR_UTC`).
 
 ## Auth
 

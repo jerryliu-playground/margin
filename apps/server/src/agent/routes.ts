@@ -9,9 +9,15 @@ interface AgentRouteOptions {
   createModel: (request: AgentRunRequest) => LanguageModel;
   maxOutputTokens: number;
   ratePerMinute: number;
+  dailyRuns: { take(): boolean };
 }
 
-export function agentRoutes({ createModel, maxOutputTokens, ratePerMinute }: AgentRouteOptions) {
+export function agentRoutes({
+  createModel,
+  maxOutputTokens,
+  ratePerMinute,
+  dailyRuns,
+}: AgentRouteOptions) {
   return async (app: FastifyInstance) => {
     app.post(
       '/agent',
@@ -21,6 +27,13 @@ export function agentRoutes({ createModel, maxOutputTokens, ratePerMinute }: Age
         const request = parseOr400(agentRunRequestSchema, req.body);
         const unknown = request.tools.find((t) => !(t.name in frontendTools));
         if (unknown) throw new HttpError(400, 'invalid_request', `Unknown tool "${unknown.name}".`);
+        if (!dailyRuns.take()) {
+          throw new HttpError(
+            429,
+            'daily_limit',
+            "The demo has used today's agent runs. Try again tomorrow.",
+          );
+        }
 
         const abort = new AbortController();
         reply.sse.onClose(() => abort.abort());

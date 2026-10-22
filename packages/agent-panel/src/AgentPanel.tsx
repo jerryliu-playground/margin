@@ -3,6 +3,7 @@ import type { EditorHost } from '@margin/shared';
 import { useId, useRef, useState, type KeyboardEvent } from 'react';
 import type { Activity, AgentSession } from './agent-session';
 import { CHECK_TITLE, checkEntries, type CheckEntry } from './checks';
+import { TONE_PRESETS } from './presets';
 import { ProposalCard } from './ProposalCard';
 import { useAgentSession } from './useAgentSession';
 
@@ -72,6 +73,12 @@ export function AgentPanel({ host, agentUrl }: AgentPanelProps) {
     });
   };
 
+  /** After a batch answer nothing is pending, so focus goes to the message box. */
+  const answerAll = (act: (s: AgentSession) => Promise<void>) => {
+    void act(session);
+    requestAnimationFrame(() => inputRef.current?.focus());
+  };
+
   const checks = checkEntries(snapshot.messages);
   // The status line is a live region: it tells screen reader users that cards arrived.
   const pendingCount = snapshot.proposals.filter((p) => p.status === 'pending').length;
@@ -113,6 +120,24 @@ export function AgentPanel({ host, agentUrl }: AgentPanelProps) {
       </div>
       {snapshot.proposals.length > 0 && (
         <section className="margin-panel__proposals" aria-label="Proposals">
+          {pendingCount > 1 && (
+            <div className="margin-panel__batch" role="group" aria-label="All pending proposals">
+              <button
+                type="button"
+                className="margin-panel__button"
+                onClick={() => answerAll((s) => s.acceptAll())}
+              >
+                Accept all {pendingCount}
+              </button>
+              <button
+                type="button"
+                className="margin-panel__button"
+                onClick={() => answerAll((s) => s.rejectAll())}
+              >
+                Reject all {pendingCount}
+              </button>
+            </div>
+          )}
           {snapshot.proposals.map((p) => (
             <ProposalCard
               key={p.toolCallId}
@@ -133,6 +158,19 @@ export function AgentPanel({ host, agentUrl }: AgentPanelProps) {
           {snapshot.error}
         </p>
       )}
+      <div className="margin-panel__presets" role="group" aria-label="Tone">
+        {TONE_PRESETS.map((preset) => (
+          <button
+            key={preset.label}
+            type="button"
+            className="margin-panel__button"
+            disabled={snapshot.running}
+            onClick={() => void session.send(preset.prompt)}
+          >
+            {preset.label}
+          </button>
+        ))}
+      </div>
       <form
         className="margin-panel__form"
         onSubmit={(e) => {

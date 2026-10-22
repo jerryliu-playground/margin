@@ -51,6 +51,18 @@ function cutAtWord(text: string, max: number): string {
 
 const firstSentence = (text: string) => /^.*?[.!?](\s|$)/.exec(text)?.[0].trim() ?? text;
 
+/** Deterministic stand-ins for a tone rewrite; the real model does the actual work. */
+function retone(text: string, tone: 'more formal' | 'shorter' | 'friendlier'): string {
+  if (tone === 'shorter') return firstSentence(text);
+  if (tone === 'friendlier')
+    return `Here's the thing: ${text.charAt(0).toLowerCase()}${text.slice(1)}`;
+  return text
+    .replace(/\bdon't\b/gi, 'do not')
+    .replace(/\bit's\b/gi, 'it is')
+    .replace(/\bcan't\b/gi, 'cannot')
+    .replace(/^/, 'Notably, ');
+}
+
 function paragraphs(body: BodyBlock[]) {
   return body.filter((b) => b.type === 'paragraph' && b.text.trim() !== '');
 }
@@ -80,7 +92,6 @@ function lastToolResult(
 }
 
 function checkReply(toolName: string, result: CheckResult, request: AgentRunRequest): Reply {
-  const lines = result.issues.slice(0, 5).map((i) => `- ${i.message}`);
   const calls: Call[] = [];
   const { body, fields } = request.state.document;
   for (const issue of result.issues) {
@@ -109,8 +120,15 @@ function checkReply(toolName: string, result: CheckResult, request: AgentRunRequ
       });
     }
   }
-  const what = toolName === 'a11yCheck' ? 'Accessibility' : 'SEO';
-  return { text: [`${what} check: ${result.summary}`, ...lines].join('\n'), calls };
+  // The panel shows the issue list itself, so the reply only says what will be fixed.
+  const what = toolName === 'a11yCheck' ? 'accessibility' : 'SEO';
+  const fixes = `I propose ${calls.length} fix${calls.length > 1 ? 'es' : ''}`;
+  let text: string;
+  if (result.issues.length === 0) text = `No ${what} issues to fix.`;
+  else if (calls.length === 0) text = `I can't fix these ${what} issues myself.`;
+  else if (calls.length < result.issues.length) text = `${fixes}; the rest need your judgement.`;
+  else text = `${fixes}.`;
+  return { text, calls };
 }
 
 export function scriptedReply(request: AgentRunRequest, prompt: LanguageModelV4Prompt = []): Reply {
@@ -182,6 +200,24 @@ export function scriptedReply(request: AgentRunRequest, prompt: LanguageModelV4P
     return { text: 'Two suggestions.', calls: [titleCall, tagsCall] };
   if (ask.includes('title')) return { text: 'Here is a shorter title.', calls: [titleCall] };
   if (ask.includes('tags')) return { text: 'Here are three tags.', calls: [tagsCall] };
+  const tone = (['more formal', 'shorter', 'friendlier'] as const).find((t) => ask.includes(t));
+  if (tone) {
+    const target = [...paragraphs(body)].sort((a, b) => b.text.length - a.text.length)[0];
+    if (!target) return { text: 'There is no paragraph to rewrite yet.' };
+    return {
+      text: `A ${tone} version of the longest paragraph.`,
+      calls: [
+        {
+          name: 'proposeBodyEdit',
+          args: {
+            blockId: target.blockId,
+            newContent: { type: 'paragraph', text: retone(target.text, tone) },
+            reason: `Makes it ${tone}.`,
+          },
+        },
+      ],
+    };
+  }
   if (ask.includes('tighten')) {
     const target = [...paragraphs(body)].sort((a, b) => b.text.length - a.text.length)[0];
     if (!target) return { text: 'There is no paragraph to tighten yet.' };

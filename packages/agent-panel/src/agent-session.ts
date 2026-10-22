@@ -1,5 +1,6 @@
 import { HttpAgent, type AbstractAgent, type AgentSubscriber, type Message } from '@ag-ui/client';
 import {
+  apiErrorSchema,
   frontendToolDefinitions,
   hashBlockText,
   serverTools,
@@ -36,6 +37,12 @@ export interface AgentSessionOptions {
   agentUrl: string;
   /** For tests: supply any AG-UI agent instead of the HTTP one. */
   createAgent?: (url: string) => AbstractAgent;
+}
+
+/** The server's own message from an HTTP error (the AG-UI client keeps the JSON body as `payload`). */
+function serverMessage(error: unknown): string | undefined {
+  const parsed = apiErrorSchema.safeParse((error as { payload?: unknown } | null)?.payload);
+  return parsed.success ? parsed.data.error.message : undefined;
 }
 
 let idCounter = 0;
@@ -111,7 +118,10 @@ export function createAgentSession({ host, agentUrl, createAgent }: AgentSession
       await agent.runAgent({ runId: newId('run'), tools: frontendToolDefinitions() }, subscriber);
     } catch (error) {
       update({
-        error: snapshot.error ?? `The agent is not reachable: ${(error as Error).message}`,
+        error:
+          snapshot.error ??
+          serverMessage(error) ??
+          `The agent is not reachable: ${(error as Error).message}`,
       });
     } finally {
       update({ running: false, activity: 'idle', messages: [...agent.messages] });
@@ -237,6 +247,18 @@ export function createAgentSession({ host, agentUrl, createAgent }: AgentSession
       if (snapshot.outdated.has(toolCallId)) resolve(toolCallId, { status: 'stale' });
       else resolve(toolCallId, { status: 'rejected', rejectReason: reason?.trim() || undefined });
       await continueIfAnswered();
+    },
+    /**
+     * Batch review (SPEC feature 10): answers every pending proposal the same way. Each one
+     * goes through accept/reject, so outdated ones become stale and the run continues once.
+     */
+    async acceptAll(): Promise<void> {
+      const ids = snapshot.proposals.filter((p) => p.status === 'pending').map((p) => p.toolCallId);
+      for (const id of ids) await this.accept(id);
+    },
+    async rejectAll(): Promise<void> {
+      const ids = snapshot.proposals.filter((p) => p.status === 'pending').map((p) => p.toolCallId);
+      for (const id of ids) await this.reject(id);
     },
     /**
      * Restores what an accepted proposal replaced, if nothing changed it since (SPEC feature 9).

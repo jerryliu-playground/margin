@@ -27,6 +27,7 @@ export default defineConfig({
         // The suite makes many agent runs per minute; rate limits have their own unit tests.
         RATE_LIMIT_PER_MINUTE: '100000',
         AGENT_RATE_LIMIT_PER_MINUTE: '100000',
+        DAILY_AGENT_RUN_LIMIT: '100000',
       },
       reuseExistingServer: false,
     },

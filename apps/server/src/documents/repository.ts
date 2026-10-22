@@ -54,6 +54,14 @@ export function createDocumentRepository(db: Db, now: () => Date = () => new Dat
       return row && toDocument(row);
     },
 
+    count(): number {
+      return db.select({ id: documents.id }).from(documents).all().length;
+    },
+
+    deleteAll(): void {
+      db.delete(documents).run();
+    },
+
     isEmpty(): boolean {
       return db.select({ id: documents.id }).from(documents).limit(1).all().length === 0;
     },
