@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { EventType, type BaseEvent } from '@ag-ui/core';
 import { frontendTools, type AgentRunRequest, type FrontendToolName } from '@margin/shared';
-import { stepCountIs, streamText, tool, type LanguageModel } from 'ai';
+import { stepCountIs, streamText, tool, type LanguageModel, type LanguageModelUsage } from 'ai';
 import { toModelMessages } from './messages';
 import { systemPrompt } from './prompt';
 
@@ -11,6 +11,8 @@ export interface RunOptions {
   maxOutputTokens: number;
   signal?: AbortSignal;
   onError?: (error: unknown) => void;
+  /** Token counts for the whole run (numbers only, safe to log). */
+  onUsage?: (usage: LanguageModelUsage) => void;
 }
 
 const isFrontendTool = (name: string): name is FrontendToolName => name in frontendTools;
@@ -39,7 +41,14 @@ function frontendToolSet(request: AgentRunRequest) {
  * The run ends with RUN_FINISHED and `pendingToolCallIds` naming the proposals the
  * browser must answer; the answer arrives as a tool message in the next run.
  */
-export async function* runAgent({ request, model, maxOutputTokens, signal, onError }: RunOptions) {
+export async function* runAgent({
+  request,
+  model,
+  maxOutputTokens,
+  signal,
+  onError,
+  onUsage,
+}: RunOptions) {
   const { threadId, runId } = request;
   yield { type: EventType.RUN_STARTED, threadId, runId } as BaseEvent;
 
@@ -119,6 +128,7 @@ export async function* runAgent({ request, model, maxOutputTokens, signal, onErr
           break;
 
         case 'finish':
+          onUsage?.(part.totalUsage);
           yield* closeText();
           if (part.finishReason === 'content-filter') {
             yield {

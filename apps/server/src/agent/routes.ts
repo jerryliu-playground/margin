@@ -30,6 +30,7 @@ export function agentRoutes({ createModel, maxOutputTokens, ratePerMinute }: Age
           maxOutputTokens,
           signal: abort.signal,
           // Log the failure, never the prompt or document (CLAUDE.md rule 3).
+          onUsage: (usage) => req.log.info({ usage }, 'agent run usage'),
           onError: (error) =>
             req.log.error(
               { err: { message: (error as Error)?.message ?? String(error) } },

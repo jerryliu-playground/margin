@@ -110,6 +110,20 @@ describe('runAgent', () => {
     expect(prompt).toContain('"blockId\\":\\"p2');
   });
 
+  it('reports token usage once per run', async () => {
+    const request = testRequest(ask('Hello'));
+    const usages: unknown[] = [];
+    const events = runAgent({
+      request,
+      model: createMockModel(request),
+      maxOutputTokens: 1000,
+      onUsage: (u) => usages.push(u),
+    });
+    for await (const event of events) expect(event).toBeDefined();
+    expect(usages).toHaveLength(1);
+    expect(usages[0]).toHaveProperty('outputTokens');
+  });
+
   it('turns a model failure into RUN_ERROR without leaking details', async () => {
     const failing: LanguageModelV4 = {
       ...createMockModel(testRequest(ask('x'))),
