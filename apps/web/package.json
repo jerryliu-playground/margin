@@ -14,6 +14,7 @@
     "@margin/shared": "workspace:*",
     "@tiptap/core": "3.32.0",
     "@tiptap/extension-unique-id": "3.32.0",
+    "@tiptap/markdown": "3.32.0",
     "@tiptap/pm": "3.32.0",
     "@tiptap/react": "3.32.0",
     "@tiptap/starter-kit": "3.32.0",

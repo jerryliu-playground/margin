@@ -6,6 +6,11 @@ body {
   color: #1f2328;
   background: #ffffff;
 }
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  min-height: 100vh;
+}
 .page {
   max-width: 760px;
   padding: 24px 32px;

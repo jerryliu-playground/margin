@@ -25,6 +25,10 @@ test('create, edit, save and reload a document', async ({ page }) => {
   await expect(page.getByLabel('Title')).toHaveValue('E2E article');
   await expect(page.getByLabel('Tags')).toHaveValue('testing, e2e');
   await expect(body).toContainText('First paragraph.');
+  // The agent panel sees the host's fields and blocks through EditorHost.
+  await expect(page.getByRole('complementary', { name: 'Agent' })).toContainText(
+    'Sees 5 fields and 1 blocks.',
+  );
 
   const axe = await new AxeBuilder({ page }).analyze();
   expect(axe.violations, JSON.stringify(axe.violations, null, 2)).toEqual([]);

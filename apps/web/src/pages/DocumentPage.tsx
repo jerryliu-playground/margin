@@ -1,16 +1,20 @@
-import type { Document, DocumentContent } from '@margin/shared';
+import { AgentPanel } from '@margin/agent-panel';
+import type { Document, DocumentContent, EditorHost } from '@margin/shared';
 import type { Editor } from '@tiptap/core';
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
-import { api } from '../api';
+import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
+import { AGENT_URL, api, getAuthToken } from '../api';
 import { BodyEditor } from '../editor/BodyEditor';
-
-type Fields = Pick<DocumentContent, 'title' | 'slug' | 'summary' | 'metaDescription' | 'tags'>;
+import { createFieldStore, type FieldStore } from '../editor/document-store';
+import { DEMO_SCHEMA } from '../editor/schema';
+import { createTipTapHost } from '../editor/tiptap-host';
 
 const parseTags = (value: string) =>
   value
     .split(',')
     .map((t) => t.trim())
     .filter(Boolean);
+const text = (v: unknown) => (typeof v === 'string' ? v : '');
+const list = (v: unknown) => (Array.isArray(v) ? (v as string[]) : []);
 
 export function DocumentPage({ id }: { id: string }) {
   const [doc, setDoc] = useState<Document>();
@@ -33,35 +37,66 @@ export function DocumentPage({ id }: { id: string }) {
         <p>Loading…</p>
       </main>
     );
-  return <DocumentEditor key={doc.id} doc={doc} />;
+  return <DocumentEditor doc={doc} />;
 }
 
 function DocumentEditor({ doc }: { doc: Document }) {
   const bodyLabelId = useId();
+  const tagsHintId = useId();
   const editorRef = useRef<Editor | null>(null);
-  const [fields, setFields] = useState<Fields>(doc);
-  const [tagsText, setTagsText] = useState(doc.tags.join(', '));
+  const tagsRef = useRef<HTMLInputElement>(null);
+  const [store] = useState<FieldStore>(() =>
+    createFieldStore({
+      title: doc.title,
+      slug: doc.slug,
+      summary: doc.summary,
+      metaDescription: doc.metaDescription,
+      tags: doc.tags,
+    }),
+  );
+  const values = useSyncExternalStore(store.subscribe, store.get);
+  const [host, setHost] = useState<EditorHost>();
   const [dirty, setDirty] = useState(false);
-  const [status, setStatus] = useState<string>('');
+  const [status, setStatus] = useState('');
 
-  const setField = <K extends keyof Fields>(name: K, value: Fields[K]) => {
-    setFields((f) => ({ ...f, [name]: value }));
+  // Any change marks the document dirty. Tags typed by the user stay as typed;
+  // tags applied by the host (an accepted proposal) are written back into the input.
+  useEffect(
+    () =>
+      store.subscribe((name, origin) => {
+        setDirty(true);
+        setStatus('');
+        if (name === 'tags' && origin === 'host' && tagsRef.current) {
+          tagsRef.current.value = list(store.get().tags).join(', ');
+        }
+      }),
+    [store],
+  );
+
+  const onEditorReady = useCallback(
+    (editor: Editor) => {
+      editorRef.current = editor;
+      setHost(createTipTapHost({ editor, fields: store, schema: DEMO_SCHEMA, getAuthToken }));
+    },
+    [store],
+  );
+  const onBodyChange = useCallback(() => {
     setDirty(true);
-  };
-
-  const onEditorReady = useCallback((editor: Editor) => {
-    editorRef.current = editor;
+    setStatus('');
   }, []);
-  const onBodyChange = useCallback(() => setDirty(true), []);
 
   const save = async () => {
     const editor = editorRef.current;
     if (!editor) return;
     setStatus('Saving…');
+    const v = store.get();
     try {
       await api.saveDocument(doc.id, {
-        ...fields,
-        tags: parseTags(tagsText),
+        title: text(v.title),
+        slug: text(v.slug),
+        summary: text(v.summary),
+        metaDescription: text(v.metaDescription),
+        tags: list(v.tags),
         body: editor.getJSON() as DocumentContent['body'],
       });
       setDirty(false);
@@ -71,75 +106,79 @@ function DocumentEditor({ doc }: { doc: Document }) {
     }
   };
 
+  const input = (name: 'title' | 'slug') => (
+    <input value={text(values[name])} onChange={(e) => store.set(name, e.target.value)} />
+  );
+  const textarea = (name: 'summary' | 'metaDescription') => (
+    <textarea
+      rows={2}
+      value={text(values[name])}
+      onChange={(e) => store.set(name, e.target.value)}
+    />
+  );
+
   return (
-    <main className="page">
-      <p>
-        <a href="#/">All documents</a>
-      </p>
-      <h1>{fields.title || 'Untitled'}</h1>
-      <form
-        className="doc-form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void save();
-        }}
-      >
-        <label>
-          Title
-          <input value={fields.title} onChange={(e) => setField('title', e.target.value)} />
-        </label>
-        <label>
-          Slug
-          <input value={fields.slug} onChange={(e) => setField('slug', e.target.value)} />
-        </label>
-        <label>
-          Summary
-          <textarea
-            rows={2}
-            value={fields.summary}
-            onChange={(e) => setField('summary', e.target.value)}
-          />
-        </label>
-        <label>
-          Meta description
-          <textarea
-            rows={2}
-            value={fields.metaDescription}
-            onChange={(e) => setField('metaDescription', e.target.value)}
-          />
-        </label>
-        <label>
-          Tags
-          <input
-            value={tagsText}
-            aria-describedby={`${bodyLabelId}-tags-hint`}
-            onChange={(e) => {
-              setTagsText(e.target.value);
-              setDirty(true);
-            }}
-          />
-          <span id={`${bodyLabelId}-tags-hint`} className="muted">
-            Separate tags with commas.
-          </span>
-        </label>
-        <div className="doc-form__body">
-          <span id={bodyLabelId} className="label">
-            Body
-          </span>
-          <BodyEditor
-            initialContent={doc.body}
-            labelledBy={bodyLabelId}
-            onReady={onEditorReady}
-            onChange={onBodyChange}
-          />
-        </div>
-        <div className="doc-form__actions">
-          <button type="submit">Save</button>
-          <span role="status" className="muted">
-            {status || (dirty ? 'Unsaved changes' : '')}
-          </span>
-        </div>
-      </form>
-    </main>
+    <div className="layout">
+      <main className="page">
+        <p>
+          <a href="#/">All documents</a>
+        </p>
+        <h1>{text(values.title) || 'Untitled'}</h1>
+        <form
+          className="doc-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void save();
+          }}
+        >
+          <label>
+            Title
+            {input('title')}
+          </label>
+          <label>
+            Slug
+            {input('slug')}
+          </label>
+          <label>
+            Summary
+            {textarea('summary')}
+          </label>
+          <label>
+            Meta description
+            {textarea('metaDescription')}
+          </label>
+          <label>
+            Tags
+            <input
+              ref={tagsRef}
+              defaultValue={doc.tags.join(', ')}
+              aria-describedby={tagsHintId}
+              onChange={(e) => store.set('tags', parseTags(e.target.value))}
+            />
+            <span id={tagsHintId} className="muted">
+              Separate tags with commas.
+            </span>
+          </label>
+          <div className="doc-form__body">
+            <span id={bodyLabelId} className="label">
+              Body
+            </span>
+            <BodyEditor
+              initialContent={doc.body}
+              labelledBy={bodyLabelId}
+              onReady={onEditorReady}
+              onChange={onBodyChange}
+            />
+          </div>
+          <div className="doc-form__actions">
+            <button type="submit">Save</button>
+            <span role="status" className="muted">
+              {status || (dirty ? 'Unsaved changes' : '')}
+            </span>
+          </div>
+        </form>
+      </main>
+      {host && <AgentPanel host={host} agentUrl={AGENT_URL} />}
+    </div>
   );
 }

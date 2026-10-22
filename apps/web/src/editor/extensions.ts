@@ -1,4 +1,5 @@
 import UniqueID from '@tiptap/extension-unique-id';
+import { Markdown } from '@tiptap/markdown';
 import StarterKit from '@tiptap/starter-kit';
 
 /** Block types that get a stable `id` attribute (ADR 0001). */
@@ -13,6 +14,8 @@ export const BLOCK_TYPES = [
 ];
 
 export const editorExtensions = [
-  StarterKit.configure({ heading: { levels: [2, 3, 4] } }),
+  // No trailing-node plugin: it would add an empty paragraph the agent sees as a block.
+  StarterKit.configure({ heading: { levels: [2, 3, 4] }, trailingNode: false }),
   UniqueID.configure({ types: BLOCK_TYPES }),
+  Markdown,
 ];
