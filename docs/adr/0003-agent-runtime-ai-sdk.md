@@ -29,7 +29,7 @@ Findings (2026-10-21):
 - Events are written as SSE by `@fastify/sse` (`data: <json>`), which is the AG-UI framing, so `@ag-ui/encoder` is not needed. Event objects are typed with `@ag-ui/core` and every event is checked against its `EventSchema` in `run.test.ts`.
 - A run that ends at proposals finishes with `RUN_FINISHED { outcome: { type: "success", pendingToolCallIds } }`.
 - An invalid tool call is still forwarded; the browser answers it with an error result so the model can correct itself (validation on both ends).
-- The real model defaults to `claude-opus-5-5` (`MARGIN_ANTHROPIC_MODEL`), with `MARGIN_MAX_OUTPUT_TOKENS` (default 16000, thinking included) as the per-run cap. Server-side refusal fallbacks are not configured: the AI SDK provider's support for them is unverified.
+- The real model defaults to `claude-haiku-5-5` (`MARGIN_ANTHROPIC_MODEL`; changed from `claude-opus-5-5` on 2026-10-22 by the owner, to try the cheapest model first — $0.10 / $0.50 per MTok vs $4 / $20; switch to `claude-sonnet-5-5` if proposal quality is not good enough), with `MARGIN_MAX_OUTPUT_TOKENS` (default 16000, thinking included) as the per-run cap. Server-side refusal fallbacks are not configured: the AI SDK provider's support for them is unverified, and Haiku 5.5 has no server-side fallback anyway.
 - The mock model (`apps/server/src/agent/mock-model.ts`) answers from a fixed script keyed by the last message.
 
 ## Consequences
