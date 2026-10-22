@@ -139,5 +139,11 @@ export function resultFor(proposal: Proposal): ProposalResult {
   }
 }
 
+/** `![alt](src)` → its parts; undefined for anything else. */
+export function parseImageMarkdown(text: string): { alt: string; src: string } | undefined {
+  const match = /^!\[([^\]]*)\]\(([^)\s]+)\)$/.exec(text.trim());
+  return match ? { alt: match[1] ?? '', src: match[2] ?? '' } : undefined;
+}
+
 export const fieldValueText = (value: FieldValue) =>
   Array.isArray(value) ? value.join(', ') : value;

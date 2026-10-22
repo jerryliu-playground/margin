@@ -17,7 +17,7 @@ Approved by the owner on 2026-10-22. One concern per commit; each commit passes 
 
 PR A (`phase-3` branch):
 
-- [ ] **P3.1 Image cards show a thumbnail and the alt text change** — no raw `![alt](src)` diff. The thumbnail uses the block's current `src` from the host, never a URL from the agent. `packages/agent-panel`.
+- [x] **P3.1 Image cards show a thumbnail and the alt text change** — no raw `![alt](src)` diff. The thumbnail uses the block's current `src` from the host, never a URL from the agent. `packages/agent-panel`.
 - [ ] **P3.2 No duplicate issue list** — the check result already lists the issues; the agent says what it will fix instead of listing them again. Prompt + mock model. `apps/server`.
 - [ ] **P3.3 Production build** — the server serves `apps/web/dist` (same origin); multi-stage `Dockerfile`; CI builds the image. `apps/server`, `Dockerfile`, `.github/workflows/ci.yml`.
 - [ ] **P3.4 Public-demo protection** — `trustProxy`, daily agent-run cap with a plain message, document cap, nightly reset to the seed. `apps/server`.

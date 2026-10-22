@@ -122,6 +122,28 @@
   margin: 0;
   color: #57606a;
 }
+.margin-proposal__image {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.margin-proposal__thumb {
+  width: 72px;
+  height: 48px;
+  object-fit: cover;
+  border: 1px solid #d0d7de;
+  border-radius: 4px;
+}
+.margin-proposal__label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #57606a;
+}
+.margin-proposal__none {
+  color: #57606a;
+  font-style: italic;
+}
 .margin-proposal__diff {
   margin: 0;
   white-space: pre-wrap;

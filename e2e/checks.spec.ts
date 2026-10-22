@@ -13,6 +13,10 @@ test('accessibility check finds the image without alt and proposes alt text', as
 
   const card = panel(page).getByRole('article', { name: 'Image edit' });
   await expect(card.getByRole('insertion')).toContainText('Bar chart from the article');
+  // A thumbnail of the current image and the alt text change, not raw Markdown.
+  await expect(card.locator('img')).toHaveAttribute('src', '/sample-chart.svg');
+  await expect(card).toContainText('Alt text');
+  await expect(card).not.toContainText('](/sample-chart.svg)');
   await expectNoAxeViolations(page, 'aside');
 
   await card.getByRole('button', { name: 'Accept Image edit' }).click();

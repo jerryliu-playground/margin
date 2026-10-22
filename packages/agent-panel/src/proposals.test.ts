@@ -1,7 +1,7 @@
 import { hashBlockText } from '@margin/shared';
 import { describe, expect, it } from 'vitest';
 import { fakeHost } from './testing/fake-agent';
-import { isStale, parseProposal, resultFor, type Proposal } from './proposals';
+import { isStale, parseImageMarkdown, parseProposal, resultFor, type Proposal } from './proposals';
 
 const call = (toolName: string, args: Record<string, unknown>) => ({
   toolCallId: 'c1',
@@ -83,6 +83,15 @@ describe('the smoke-test case: a 175-character meta description', () => {
       ok: false,
       error: 'Field "metaDescription" allows at most 160 characters.',
     });
+  });
+});
+
+describe('parseImageMarkdown', () => {
+  it('reads alt and src, and rejects anything else', () => {
+    expect(parseImageMarkdown('![A chart](/c.svg)')).toEqual({ alt: 'A chart', src: '/c.svg' });
+    expect(parseImageMarkdown('![](/c.svg)')).toEqual({ alt: '', src: '/c.svg' });
+    expect(parseImageMarkdown('A chart')).toBeUndefined();
+    expect(parseImageMarkdown('![x](/a.svg) and more')).toBeUndefined();
   });
 });
 
