@@ -22,7 +22,7 @@ Approved by the owner on 2026-10-22. One commit per step; each step passes `pnpm
 - [x] **P2.5 Panel shows checks** — activity "Checking accessibility…" / "Checking SEO…", a short issue list in the conversation; fixes still arrive as proposal cards. Unit + e2e. `packages/agent-panel`.
 - [x] **P2.6 Undo** — "Undo" on accepted cards, guarded by "unchanged since accept", focus handled. Unit + e2e. `packages/agent-panel`.
 - [x] **P2.7 Keyboard and axe everywhere** — one keyboard-only e2e (ask, tab to card, accept, undo); axe on every screen and every card state (pending, accepted, rejected, outdated, undone) and the 404 page; fix what it finds. `e2e/`.
-- [ ] **P2.8 AI review on PRs** — workflow, reviewer prompt from CLAUDE.md, ADR 0008; verify on one real PR. `.github/workflows/`, `docs/adr/`.
+- [x] **P2.8 AI review on PRs** — workflow, reviewer prompt from CLAUDE.md, ADR 0008; verify on one real PR (pending: needs the owner's secret and a pushed branch). `.github/workflows/`, `docs/adr/`.
 
 ## Risks to watch
 
