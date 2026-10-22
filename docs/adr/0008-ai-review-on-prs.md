@@ -12,7 +12,7 @@ SPEC §8 lists "an AI review step on pull requests (a reviewer prompt that check
 - `.github/workflows/review.yml` runs `anthropics/claude-code-action`, pinned to the commit of `v1.0.257` (`e63e2e7e…`), on every non-draft pull request.
 - The prompt makes CLAUDE.md the standard: the eight hard rules, the definition of done, and correctness bugs in changed lines. It skips anything ESLint, Prettier or tsc already enforce, and it only comments (no approve / request changes).
 - Model `claude-sonnet-5-5`, at most 15 turns. Tools: read files, `gh pr diff/view/comment`, read-only `gh api repos/<repo>/commits/…` (to judge rule 8 per commit), inline comments.
-- It authenticates to GitHub with the job's own `GITHUB_TOKEN` (`contents: read`, `pull-requests: write`), not the Claude GitHub App: no third-party app to install, and the token expires with the job. Comments appear as `github-actions[bot]`. (Found on the first run, 2026-10-22: without the app, the default OIDC exchange fails with 401.)
+- It authenticates to GitHub through the Claude GitHub App, installed on this repository by the owner: the action exchanges the job's OIDC token (`id-token: write`) for a short-lived app token scoped to this repository. Comments appear as `claude[bot]`. (History, 2026-10-22: the first run failed with 401 because the app was not installed; the job briefly used its own `GITHUB_TOKEN` instead, then went back to the app once it was installed.)
 - The repository owner adds the `ANTHROPIC_API_KEY` secret. Without it (and on fork PRs, which get no secrets), the job logs a skip and passes.
 - From now on, changes land through branches and pull requests, so every change gets reviewed.
 
