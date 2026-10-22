@@ -11,6 +11,7 @@
     "typecheck": "tsc -p ."
   },
   "dependencies": {
+    "@ag-ui/client": "1.0.3",
     "@margin/shared": "workspace:*"
   },
   "peerDependencies": {
@@ -18,6 +19,7 @@
   },
   "devDependencies": {
     "@types/react": "18.3.31",
-    "react": "18.3.1"
+    "react": "18.3.1",
+    "rxjs": "7.8.1"
   }
 }

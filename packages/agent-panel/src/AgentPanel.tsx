@@ -1,5 +1,8 @@
-import { useId, useSyncExternalStore } from 'react';
+import type { Message } from '@ag-ui/client';
 import type { EditorHost } from '@margin/shared';
+import { useId, useState, type KeyboardEvent } from 'react';
+import type { Activity } from './agent-session';
+import { useAgentSession } from './useAgentSession';
 
 export interface AgentPanelProps {
   host: EditorHost;
@@ -7,25 +10,84 @@ export interface AgentPanelProps {
   agentUrl: string;
 }
 
-/**
- * Host-agnostic agent side panel. Phase 0: shell only.
- * Phase 1 adds the AG-UI client, streaming messages and proposal cards (ADR 0002).
- */
-export function AgentPanel({ host }: AgentPanelProps) {
+const ACTIVITY_TEXT: Record<Activity, string> = {
+  idle: '',
+  reading: 'Reading document…',
+  writing: 'Writing…',
+  proposing: 'Proposing an edit…',
+};
+
+function textOf(message: Message): string {
+  return typeof message.content === 'string' ? message.content : '';
+}
+
+/** Host-agnostic agent side panel (SPEC §5). Talks to the editor only through EditorHost. */
+export function AgentPanel({ host, agentUrl }: AgentPanelProps) {
   const headingId = useId();
-  const state = useSyncExternalStore(
-    (onChange) => host.subscribe(onChange),
-    () => host.getState(),
+  const inputId = useId();
+  const [session, snapshot] = useAgentSession(host, agentUrl);
+  const [draft, setDraft] = useState('');
+
+  const visible = snapshot.messages.filter(
+    (m) => (m.role === 'user' || m.role === 'assistant') && textOf(m) !== '',
   );
+
+  const submit = () => {
+    if (!draft.trim() || snapshot.running) return;
+    void session.send(draft);
+    setDraft('');
+  };
+  const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      submit();
+    }
+  };
 
   return (
     <aside className="margin-panel" aria-labelledby={headingId}>
       <h2 id={headingId} className="margin-panel__title">
         Agent
       </h2>
-      <p className="margin-panel__status">
-        Sees {Object.keys(state.fields).length} fields and {state.body.length} blocks.
+      {/* role="log" is not allowed on <ol>, so the log is a div of message blocks. */}
+      <div className="margin-panel__log" role="log" aria-label="Conversation" aria-live="polite">
+        {visible.map((m) => (
+          <div key={m.id} className={`margin-panel__msg margin-panel__msg--${m.role}`}>
+            <span className="margin-panel__who">{m.role === 'user' ? 'You' : 'Agent'}</span>
+            <p>{textOf(m)}</p>
+          </div>
+        ))}
+      </div>
+      <p className="margin-panel__status" role="status">
+        {ACTIVITY_TEXT[snapshot.activity]}
       </p>
+      {snapshot.error && (
+        <p className="margin-panel__error" role="alert">
+          {snapshot.error}
+        </p>
+      )}
+      <form
+        className="margin-panel__form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          submit();
+        }}
+      >
+        <label htmlFor={inputId} className="margin-panel__label">
+          Message the agent
+        </label>
+        <textarea
+          id={inputId}
+          className="margin-panel__input"
+          rows={3}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={onKeyDown}
+        />
+        <button type="submit" className="margin-panel__button" disabled={snapshot.running}>
+          Send
+        </button>
+      </form>
     </aside>
   );
 }
