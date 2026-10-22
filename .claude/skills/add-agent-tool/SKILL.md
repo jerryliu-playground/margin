@@ -20,14 +20,15 @@ Read `docs/architecture.md` (agent round trip) and ADR 0003 first. Decide the ki
 3. **Handler.**
    - Frontend tool: the server passes it to `streamText` **without `execute`** (see `apps/server/src/agent/tool-round-trip.spike.test.ts` for the pattern). The panel validates the call's arguments with the same schema before showing anything. Invalid arguments are answered with an error tool result, never shown as a proposal.
    - Server tool: an AI SDK `tool({ inputSchema, execute })` in `apps/server/src/agent/`. Validate input with the shared schema; return plain JSON.
-4. **Proposal UI (frontend tools only, packages/agent-panel).**
+4. **Proposal UI (frontend tools only, packages/agent-panel).** Extend `parseProposal` in `proposals.ts` (validation and the "before" value), then render it in `ProposalCard.tsx`; the session (`agent-session.ts`) already handles batching, answers and focus.
    - A card with old vs new, the reason, and Accept / Reject buttons with accessible names.
    - Accept calls the matching `EditorHost` method, never the editor directly (CLAUDE.md rule 7).
    - Body proposals carry `baseHash`; if the block changed, show the card as stale and disable Accept.
    - After Accept or Reject, move focus to the next pending card, or to the message input if none is left.
    - The answer goes back as a tool message using `proposalResultSchema`.
 5. **Tests.**
-   - Server: `app.inject()` (or the spike pattern) with `MockLanguageModelV4` returning a tool call for the new tool. Never call the real model.
+   - Server: `runAgent` with a scripted model (`run.test.ts` pattern; every event is checked against the AG-UI `EventSchema`), and add a keyword to the mock script in `mock-model.ts` for e2e. Never call the real model.
+   - Panel: drive the session with `FakeAgent` / `fakeHost` (`agent-session.test.ts` pattern).
    - E2E: follow the `write-e2e-test` skill. One test for Accept (value applied), one for Reject (nothing changed). Include an axe check on the card.
 6. **Docs.** Add the tool to `docs/architecture.md` (tool list) and, if it introduces a new term, to `docs/domain.md`.
 7. Run `pnpm check`.

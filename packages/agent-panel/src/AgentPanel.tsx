@@ -35,9 +35,11 @@ export function AgentPanel({ host, agentUrl }: AgentPanelProps) {
    * After Accept/Reject, focus moves to the next pending proposal, or to the message box
    * when none is left (CLAUDE.md rule 6). Focus never leaves the panel.
    */
-  const answer = (act: (s: AgentSession) => Promise<void>) => {
-    const done = act(session);
-    const next = session.getSnapshot().proposals.find((p) => p.status === 'pending');
+  const answer = (toolCallId: string, act: (s: AgentSession) => Promise<void>) => {
+    const next = session
+      .getSnapshot()
+      .proposals.find((p) => p.status === 'pending' && p.toolCallId !== toolCallId);
+    void act(session);
     requestAnimationFrame(() => {
       const target = next
         ? rootRef.current?.querySelector<HTMLButtonElement>(
@@ -46,7 +48,6 @@ export function AgentPanel({ host, agentUrl }: AgentPanelProps) {
         : inputRef.current;
       target?.focus();
     });
-    void done;
   };
 
   const visible = snapshot.messages.filter(
@@ -86,8 +87,8 @@ export function AgentPanel({ host, agentUrl }: AgentPanelProps) {
               key={p.toolCallId}
               proposal={p}
               outdated={snapshot.outdated.has(p.toolCallId)}
-              onAccept={() => answer((s) => s.accept(p.toolCallId))}
-              onReject={(reason) => answer((s) => s.reject(p.toolCallId, reason))}
+              onAccept={() => answer(p.toolCallId, (s) => s.accept(p.toolCallId))}
+              onReject={(reason) => answer(p.toolCallId, (s) => s.reject(p.toolCallId, reason))}
             />
           ))}
         </section>

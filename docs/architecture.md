@@ -52,6 +52,21 @@ append { role: "tool", toolCallId, content } and runAgent again ──► agent 
 | `model.ts`      | Picks Claude (`MARGIN_MODEL=anthropic`) or the scripted mock; the only reader of the key |
 | `mock-model.ts` | Deterministic script for tests and offline dev                                           |
 
+## Agent panel (packages/agent-panel/src)
+
+| File                                  | Role                                                                                                |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `agent-session.ts`                    | AG-UI client session: runs, streaming, activity, proposal registry, Accept/Reject, auto-continue    |
+| `proposals.ts`                        | Tool call → proposal (validated against shared schemas and `getSchema()`), stale check, tool result |
+| `AgentPanel.tsx` / `ProposalCard.tsx` | UI; focus moves to the next pending card or the message box after an answer                         |
+| `fake-agent.ts`                       | Test doubles: scripted AG-UI agent and in-memory `EditorHost`                                       |
+
+Approval rules the session enforces:
+
+- A turn's proposals are answered together: the next run starts when every tool call of the turn has an answer.
+- An invalid tool call is never shown; it is answered `rejected` with the validation error. More than two all-invalid turns in a row stop with an error.
+- A body proposal whose block changed (hash differs from `baseHash`) cannot be accepted; dismissing it answers `stale`.
+
 ## Auth
 
 The panel never holds the model key. It calls `EditorHost.getAuthToken()` and sends the token as a bearer header. The server holds the model key from environment variables (ADR 0006).

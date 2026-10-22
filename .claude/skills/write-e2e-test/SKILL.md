@@ -26,7 +26,22 @@ Never set `MARGIN_MODEL=anthropic` or an API key in a test (CLAUDE.md rule 5). I
    ```
 5. **Focus:** after Accept or Reject, assert where focus went (`await expect(locator).toBeFocused()`).
 6. **Approval flows** need both sides: an Accept test that checks the value changed (and is saved, if the flow saves), and a Reject test that checks nothing changed.
-7. **Isolation:** each test creates the document it needs; don't depend on another test's data.
+7. **Isolation:** each test creates the document it needs (`createDocument` in `e2e/helpers.ts`); don't depend on another test's data. The seeded article is read-only for tests.
+8. **Scope every lookup.** The editor form and the agent panel share roles and labels (two `status` regions; a proposal card is named after the field it changes). Use `field(page, 'Title')` for form fields, `panel(page)` for the panel, and `page.getByRole('main')` for anything else in the editor. Unscoped `page.getByLabel(...)` / `page.getByRole('status')` will hit strict-mode errors.
+
+## Driving the agent
+
+The mock model (`apps/server/src/agent/mock-model.ts`) answers by keyword in the last user message:
+
+| Message contains   | Reply                                                                 |
+| ------------------ | --------------------------------------------------------------------- |
+| `meta description` | text + `proposeFieldValue(metaDescription)` from the first paragraph  |
+| `title and tags`   | two proposals in one turn                                             |
+| `title` / `tags`   | one `proposeFieldValue`                                               |
+| `tighten`          | `proposeBodyEdit` on the longest paragraph (keeps the first sentence) |
+| anything else      | a short help text                                                     |
+
+After a tool result it replies in one sentence (`Done. Save the document…`, `OK, I left it unchanged. Noted: <reason>`, …). Add a keyword there when a new flow needs a scripted answer; keep it deterministic.
 
 ## Run
 

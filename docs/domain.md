@@ -13,6 +13,7 @@ Use these names in code, tests and copy.
 | **Base hash**       | Hash of a block's `text` when a proposal was made. Used to detect stale proposals.                                                                            |
 | **Document state**  | What the agent sees: field values plus body blocks. Sent as AG-UI shared state.                                                                               |
 | **Host**            | The editor the panel runs in (our demo, Strapi, WordPress). Implements `EditorHost`.                                                                          |
+| **Outdated**        | A pending body proposal whose block changed since it was made. It can only be dismissed, which answers `stale`.                                               |
 | **Proposal**        | A suggested change from the agent, shown as a card with old vs new. Kinds: field proposal, body proposal. States: `pending`, `accepted`, `rejected`, `stale`. |
 | **Accept / Reject** | The user's answer to a proposal. Accept applies it to the editor (not saved). Reject may carry a reason.                                                      |
 | **Interrupt**       | The pause between a frontend tool call and the user's answer. The run ends; the next run carries the answer.                                                  |
