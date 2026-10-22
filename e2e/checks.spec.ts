@@ -10,6 +10,8 @@ test('accessibility check finds the image without alt and proposes alt text', as
   const log = panel(page).getByRole('log');
   await expect(log).toContainText('Accessibility check');
   await expect(log.getByRole('listitem')).toContainText(['An image has no alt text.']);
+  // Listed once, in the check result, not again in the agent's reply.
+  await expect(log.getByText('An image has no alt text.', { exact: false })).toHaveCount(1);
 
   const card = panel(page).getByRole('article', { name: 'Image edit' });
   await expect(card.getByRole('insertion')).toContainText('Bar chart from the article');

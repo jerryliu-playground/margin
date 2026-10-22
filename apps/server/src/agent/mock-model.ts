@@ -80,7 +80,6 @@ function lastToolResult(
 }
 
 function checkReply(toolName: string, result: CheckResult, request: AgentRunRequest): Reply {
-  const lines = result.issues.slice(0, 5).map((i) => `- ${i.message}`);
   const calls: Call[] = [];
   const { body, fields } = request.state.document;
   for (const issue of result.issues) {
@@ -109,8 +108,15 @@ function checkReply(toolName: string, result: CheckResult, request: AgentRunRequ
       });
     }
   }
-  const what = toolName === 'a11yCheck' ? 'Accessibility' : 'SEO';
-  return { text: [`${what} check: ${result.summary}`, ...lines].join('\n'), calls };
+  // The panel shows the issue list itself, so the reply only says what will be fixed.
+  const what = toolName === 'a11yCheck' ? 'accessibility' : 'SEO';
+  const fixes = `I propose ${calls.length} fix${calls.length > 1 ? 'es' : ''}`;
+  let text: string;
+  if (result.issues.length === 0) text = `No ${what} issues to fix.`;
+  else if (calls.length === 0) text = `I can't fix these ${what} issues myself.`;
+  else if (calls.length < result.issues.length) text = `${fixes}; the rest need your judgement.`;
+  else text = `${fixes}.`;
+  return { text, calls };
 }
 
 export function scriptedReply(request: AgentRunRequest, prompt: LanguageModelV4Prompt = []): Reply {
