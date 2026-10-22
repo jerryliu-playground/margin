@@ -5,6 +5,7 @@ import type {
 } from '@ai-sdk/provider';
 import {
   checkResultSchema,
+  editorEventsOf,
   proposalResultSchema,
   type AgentRunRequest,
   type BodyBlock,
@@ -236,7 +237,7 @@ export function scriptedReply(request: AgentRunRequest, prompt: LanguageModelV4P
     };
   }
   // Editor events (AG-UI context): acknowledge an undo instead of being confused by it.
-  if (request.context.some((c) => c.value.includes('undid'))) {
+  if (editorEventsOf(request.context).some((e) => e.type.startsWith('undo'))) {
     return { text: 'I see you undid my last change, so I am working from the current document.' };
   }
   return {

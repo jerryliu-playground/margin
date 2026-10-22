@@ -6,6 +6,7 @@ import {
   hashBlockText,
   serverTools,
   type AgentState,
+  type EditorEvent,
   type EditorHost,
 } from '@margin/shared';
 import { canUndo, isStale, parseProposal, resultFor, type Proposal } from './proposals';
@@ -69,7 +70,7 @@ export function createAgentSession({ host, agentUrl, createAgent }: AgentSession
   const answers = new Map<string, string>();
   let invalidStreak = 0;
   /** Things the user did that the agent cannot see in the history (undos), sent with the next run. */
-  const editorEvents: string[] = [];
+  const editorEvents: EditorEvent[] = [];
 
   const update = (patch: Partial<SessionSnapshot>) => {
     snapshot = { ...snapshot, ...patch };
@@ -125,7 +126,7 @@ export function createAgentSession({ host, agentUrl, createAgent }: AgentSession
           runId: newId('run'),
           tools: frontendToolDefinitions(),
           context: events.length
-            ? [{ description: EDITOR_EVENTS_CONTEXT, value: events.join('\n') }]
+            ? [{ description: EDITOR_EVENTS_CONTEXT, value: JSON.stringify(events) }]
             : [],
         },
         subscriber,
@@ -305,8 +306,8 @@ export function createAgentSession({ host, agentUrl, createAgent }: AgentSession
         patch({ status: 'undone', undoError: undefined });
         editorEvents.push(
           proposal.kind === 'field'
-            ? `The user undid your accepted proposal for the field "${proposal.field}"; it is back to its previous value.`
-            : `The user undid your accepted edit to block ${proposal.blockId}; it is back to its previous content.`,
+            ? { type: 'undo-field', field: proposal.field }
+            : { type: 'undo-block', blockId: proposal.blockId },
         );
       } catch (error) {
         patch({ undoError: `Could not undo: ${(error as Error).message}` });

@@ -292,7 +292,7 @@ describe('agent session', () => {
       expect(agent.inputs[2]?.context).toEqual([
         {
           description: 'Editor events since your last turn',
-          value: expect.stringContaining('undid your accepted proposal for the field "title"'),
+          value: JSON.stringify([{ type: 'undo-field', field: 'title' }]),
         },
       ]);
       await session.send('And again'); // run 4: already told
