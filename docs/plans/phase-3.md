@@ -27,7 +27,7 @@ PR A (`phase-3` branch):
 
 After PR A is merged:
 
-- [ ] **P3.8 Go live** — the owner creates the Fly app, sets `ANTHROPIC_API_KEY` and `MARGIN_TOKEN_SECRET` with `fly secrets set`, adds `FLY_API_TOKEN` to GitHub; first deploy; real-model smoke test, including on a phone (SSE on iOS Safari).
+- [x] **P3.8 Go live** — the owner creates the Fly app, sets `ANTHROPIC_API_KEY` and `MARGIN_TOKEN_SECRET` with `fly secrets set`, adds `FLY_API_TOKEN` to GitHub; first deploy; real-model smoke test, including on a phone (SSE on iOS Safari). Done 2026-10-22: live at https://margin-demo.fly.dev; real-model check and accept flow pass; the phone-width layout was broken (fixed on the next branch); iOS Safari still to test on a real device.
 
 PR B:
 
