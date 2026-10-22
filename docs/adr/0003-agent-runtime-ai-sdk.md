@@ -24,6 +24,14 @@ Findings (2026-10-21):
 - Server tools are ordinary AI SDK tools with `execute`.
 - Tests inject `MockLanguageModelV4`; no test calls the real API (CLAUDE.md rule 5).
 
+## Implementation notes (2026-10-22)
+
+- Events are written as SSE by `@fastify/sse` (`data: <json>`), which is the AG-UI framing, so `@ag-ui/encoder` is not needed. Event objects are typed with `@ag-ui/core` and every event is checked against its `EventSchema` in `run.test.ts`.
+- A run that ends at proposals finishes with `RUN_FINISHED { outcome: { type: "success", pendingToolCallIds } }`.
+- An invalid tool call is still forwarded; the browser answers it with an error result so the model can correct itself (validation on both ends).
+- The real model defaults to `claude-opus-5-5` (`MARGIN_ANTHROPIC_MODEL`), with `MARGIN_MAX_OUTPUT_TOKENS` (default 16000, thinking included) as the per-run cap. Server-side refusal fallbacks are not configured: the AI SDK provider's support for them is unverified.
+- The mock model (`apps/server/src/agent/mock-model.ts`) answers from a fixed script keyed by the last message.
+
 ## Consequences
 
 - Easy: the protocol mapping is our code and fully visible; model swap is one line; no CopilotKit or Mastra storage.

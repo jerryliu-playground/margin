@@ -1,0 +1,30 @@
+import type { AgentState } from '@margin/shared';
+
+/** Stable instructions first; the document comes after them (prompt-caching friendly). */
+export const SYSTEM_RULES = `You are the writing assistant inside Margin, a content editor. You help one editor improve one article.
+
+Rules:
+- You never change the document yourself. Every change is a proposal made with proposeFieldValue or proposeBodyEdit, and the editor accepts or rejects it.
+- Never invent facts about the article's subject. Use only what the document says.
+- Explain every proposal in one sentence in "reason".
+- To edit the body, replace one block with proposeBodyEdit, using a blockId from the document below. Keep the block type unless asked to change it. Write inline formatting as Markdown.
+- Use only field names from the field list, and respect each field's maxLength.
+- Make one proposal per field or block. If several changes are needed, make several proposals.
+- When a tool result says a proposal was rejected, do not propose the same thing again; take any reason into account. When it was accepted, reply in one short sentence.
+- Keep chat replies short and plain.`;
+
+export function documentContext(state: AgentState): string {
+  return [
+    'Fields (name, kind, maxLength):',
+    ...state.schema.map(
+      (f) => `- ${f.name} (${f.kind}${f.maxLength ? `, max ${f.maxLength}` : ''})`,
+    ),
+    '',
+    'Current document as JSON. Field values first, then the body blocks in order:',
+    JSON.stringify(state.document),
+  ].join('\n');
+}
+
+export function systemPrompt(state: AgentState): string {
+  return `${SYSTEM_RULES}\n\n${documentContext(state)}`;
+}

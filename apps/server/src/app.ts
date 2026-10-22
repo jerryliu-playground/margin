@@ -1,6 +1,9 @@
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
+import sse from '@fastify/sse';
 import Fastify, { type FastifyInstance } from 'fastify';
+import { createModelFactory } from './agent/model';
+import { agentRoutes } from './agent/routes';
 import { createTokenService, randomSecret } from './auth';
 import type { Config } from './config';
 import { openDb } from './db/client';
@@ -34,6 +37,7 @@ export async function buildApp(config: Config): Promise<FastifyInstance> {
     allowedHeaders: ['authorization', 'content-type'],
   });
   await app.register(rateLimit, { max: config.RATE_LIMIT_PER_MINUTE, timeWindow: '1 minute' });
+  await app.register(sse, { heartbeatInterval: 15_000 });
 
   app.setErrorHandler((err, _req, reply) => {
     if (err instanceof HttpError) {
@@ -75,6 +79,13 @@ export async function buildApp(config: Config): Promise<FastifyInstance> {
       }
     });
     await secured.register(documentRoutes(repo));
+    await secured.register(
+      agentRoutes({
+        createModel: createModelFactory(config),
+        maxOutputTokens: config.MARGIN_MAX_OUTPUT_TOKENS,
+        ratePerMinute: config.AGENT_RATE_LIMIT_PER_MINUTE,
+      }),
+    );
   });
 
   return app;

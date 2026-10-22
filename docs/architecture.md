@@ -41,6 +41,17 @@ append { role: "tool", toolCallId, content } and runAgent again ──► agent 
 - **Server tools (Phase 2):** `a11yCheck`, `seoCheck`. Executed on the server, results stream as tool-call events.
 - **Interrupt:** a run ends at an unanswered frontend tool call. The next run starts when the user answers.
 
+## Server agent (apps/server/src/agent)
+
+| File            | Role                                                                                     |
+| --------------- | ---------------------------------------------------------------------------------------- |
+| `routes.ts`     | `POST /agent`: validates `agentRunRequestSchema`, rejects unknown tools, streams SSE     |
+| `run.ts`        | AI SDK `streamText` parts → AG-UI events (the adapter, ADR 0003)                         |
+| `messages.ts`   | AG-UI messages → AI SDK messages; closes unanswered tool calls as rejected               |
+| `prompt.ts`     | System rules, then the field list and document as JSON                                   |
+| `model.ts`      | Picks Claude (`MARGIN_MODEL=anthropic`) or the scripted mock; the only reader of the key |
+| `mock-model.ts` | Deterministic script for tests and offline dev                                           |
+
 ## Auth
 
 The panel never holds the model key. It calls `EditorHost.getAuthToken()` and sends the token as a bearer header. The server holds the model key from environment variables (ADR 0006).

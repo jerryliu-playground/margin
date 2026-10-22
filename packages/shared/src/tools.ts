@@ -39,11 +39,12 @@ export const frontendTools = {
 export type FrontendToolName = keyof typeof frontendTools;
 
 /** AG-UI `Tool` shape: name, description and JSON Schema parameters. */
-export interface ToolDefinition {
+// A type alias (not an interface) so it fits AG-UI's loose `Tool` record type.
+export type ToolDefinition = {
   name: FrontendToolName;
   description: string;
   parameters: Record<string, unknown>;
-}
+};
 
 export function frontendToolDefinitions(): ToolDefinition[] {
   return (Object.keys(frontendTools) as FrontendToolName[]).map((name) => ({

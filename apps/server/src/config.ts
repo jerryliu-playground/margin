@@ -7,6 +7,10 @@ const envSchema = z.object({
   /** "mock" = deterministic mock model (tests, offline dev). "anthropic" = Claude. */
   MARGIN_MODEL: z.enum(['mock', 'anthropic']).default('mock'),
   ANTHROPIC_API_KEY: z.string().optional(),
+  /** Claude model id used when MARGIN_MODEL=anthropic. */
+  MARGIN_ANTHROPIC_MODEL: z.string().min(1).default('claude-opus-5-5'),
+  /** Output cap per agent run (SPEC §6). Includes thinking tokens. */
+  MARGIN_MAX_OUTPUT_TOKENS: z.coerce.number().int().positive().max(64_000).default(16_000),
   /** SQLite file path, or ":memory:". */
   MARGIN_DB_PATH: z.string().min(1).default('./data/margin.db'),
   /** HMAC secret for short-lived tokens. Required in production. */

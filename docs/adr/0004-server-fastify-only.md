@@ -21,6 +21,7 @@ One Fastify 5 process (`apps/server`):
 
 - Easy: one place for auth, limits and validation; familiar testing.
 - Watch: `@fastify/sse` is 0.6.1 (pre-1.0). If it breaks, fall back to `reply.raw` with `@ag-ui/encoder`.
+- Note (2026-10-22): `/agent` uses `{ sse: 'manual' }`, so the body is validated and a bad request returns a plain 400 before the stream opens.
 
 ## Alternatives considered
 

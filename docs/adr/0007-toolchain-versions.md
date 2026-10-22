@@ -19,7 +19,7 @@ Pin exact versions (no `^`) for runtime and tooling.
 | UI              | react, react-dom                                                    | 18.3.1                        | matches Strapi 5 and WordPress hosts; panel peer is `^18.3 \|\| ^19` |
 | Build           | vite / @vitejs/plugin-react                                         | 8.3.4 / 6.1.2                 | 8.3.5 was under a day old (see below)                                |
 | Editor          | @tiptap/react, core, pm, starter-kit, extension-unique-id, markdown | 3.32.0                        | ADR 0001                                                             |
-| AG-UI           | @ag-ui/client, core, encoder                                        | 1.0.3                         | ADR 0002/0003                                                        |
+| AG-UI           | @ag-ui/client (web), @ag-ui/core (server types)                     | 1.0.3                         | ADR 0002/0003; no encoder, see ADR 0003 notes                        |
 | Agent           | ai / @ai-sdk/anthropic                                              | 7.0.143 / 4.0.82              | ADR 0003; older than the newest on purpose (see below)               |
 | Server          | fastify, @fastify/cors, @fastify/rate-limit, @fastify/sse           | 5.12.7, 11.3.1, 11.2.1, 0.6.1 | ADR 0004                                                             |
 | Storage         | drizzle-orm, drizzle-kit, better-sqlite3                            | 0.45.4, 0.31.11, 13.0.3       | ADR 0005                                                             |
