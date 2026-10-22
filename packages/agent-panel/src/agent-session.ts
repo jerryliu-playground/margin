@@ -8,7 +8,8 @@ import {
 import { isStale, parseProposal, resultFor, type Proposal } from './proposals';
 
 /** What the panel shows about the current run. */
-export type Activity = 'idle' | 'reading' | 'writing' | 'proposing';
+export type Activity =
+  'idle' | 'reading' | 'writing' | 'proposing' | 'checking-a11y' | 'checking-seo';
 
 /** A frontend tool call as the agent made it. */
 export interface ToolCallRequest {
@@ -69,7 +70,15 @@ export function createAgentSession({ host, agentUrl, createAgent }: AgentSession
     onTextMessageContentEvent: () => {
       if (snapshot.activity !== 'writing') update({ activity: 'writing' });
     },
-    onToolCallStartEvent: () => update({ activity: 'proposing' }),
+    onToolCallStartEvent: ({ event }) =>
+      update({
+        activity:
+          event.toolCallName === 'a11yCheck'
+            ? 'checking-a11y'
+            : event.toolCallName === 'seoCheck'
+              ? 'checking-seo'
+              : 'proposing',
+      }),
     onToolCallEndEvent: ({ event, toolCallName, toolCallArgs }) => {
       // Server tools (checks) are answered by the server in the same run.
       if (toolCallName in serverTools) return;

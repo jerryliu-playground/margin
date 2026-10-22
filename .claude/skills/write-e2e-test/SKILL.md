@@ -33,13 +33,15 @@ Never set `MARGIN_MODEL=anthropic` or an API key in a test (CLAUDE.md rule 5). I
 
 The mock model (`apps/server/src/agent/mock-model.ts`) answers by keyword in the last user message:
 
-| Message contains   | Reply                                                                 |
-| ------------------ | --------------------------------------------------------------------- |
-| `meta description` | text + `proposeFieldValue(metaDescription)` from the first paragraph  |
-| `title and tags`   | two proposals in one turn                                             |
-| `title` / `tags`   | one `proposeFieldValue`                                               |
-| `tighten`          | `proposeBodyEdit` on the longest paragraph (keeps the first sentence) |
-| anything else      | a short help text                                                     |
+| Message contains   | Reply                                                                                   |
+| ------------------ | --------------------------------------------------------------------------------------- |
+| `accessibility`    | `a11yCheck` on the server, then an issue list and an image alt-text proposal            |
+| `check seo`        | `seoCheck` on the server, then an issue list and a meta description proposal if missing |
+| `meta description` | text + `proposeFieldValue(metaDescription)` from the first paragraph                    |
+| `title and tags`   | two proposals in one turn                                                               |
+| `title` / `tags`   | one `proposeFieldValue`                                                                 |
+| `tighten`          | `proposeBodyEdit` on the longest paragraph (keeps the first sentence)                   |
+| anything else      | a short help text                                                                       |
 
 After a tool result it replies in one sentence (`Done. Save the document…`, `OK, I left it unchanged. Noted: <reason>`, …). Add a keyword there when a new flow needs a scripted answer; keep it deterministic.
 

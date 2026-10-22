@@ -57,6 +57,7 @@ append { role: "tool", toolCallId, content } and runAgent again ──► agent 
 | File                                  | Role                                                                                                |
 | ------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | `agent-session.ts`                    | AG-UI client session: runs, streaming, activity, proposal registry, Accept/Reject, auto-continue    |
+| `checks.ts`                           | Finds server check results (tool messages) in the conversation for the issue list                   |
 | `proposals.ts`                        | Tool call → proposal (validated against shared schemas and `getSchema()`), stale check, tool result |
 | `AgentPanel.tsx` / `ProposalCard.tsx` | UI; focus moves to the next pending card or the message box after an answer                         |
 | `fake-agent.ts`                       | Test doubles: scripted AG-UI agent and in-memory `EditorHost`                                       |

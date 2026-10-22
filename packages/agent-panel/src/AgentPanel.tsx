@@ -2,6 +2,7 @@ import type { Message } from '@ag-ui/client';
 import type { EditorHost } from '@margin/shared';
 import { useId, useRef, useState, type KeyboardEvent } from 'react';
 import type { Activity, AgentSession } from './agent-session';
+import { CHECK_TITLE, checkEntries, type CheckEntry } from './checks';
 import { ProposalCard } from './ProposalCard';
 import { useAgentSession } from './useAgentSession';
 
@@ -16,7 +17,28 @@ const ACTIVITY_TEXT: Record<Activity, string> = {
   reading: 'Reading document…',
   writing: 'Writing…',
   proposing: 'Proposing an edit…',
+  'checking-a11y': 'Checking accessibility…',
+  'checking-seo': 'Checking SEO…',
 };
+
+function CheckSummary({ entry }: { entry: CheckEntry }) {
+  return (
+    <div className="margin-panel__msg margin-panel__msg--check">
+      <span className="margin-panel__who">{CHECK_TITLE[entry.toolName]}</span>
+      <p>{entry.result.summary}</p>
+      {entry.result.issues.length > 0 && (
+        <ul className="margin-panel__issues">
+          {entry.result.issues.map((issue, i) => (
+            <li key={i}>
+              <span className="margin-sr">{issue.severity}: </span>
+              {issue.message}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 function textOf(message: Message): string {
   return typeof message.content === 'string' ? message.content : '';
@@ -50,8 +72,9 @@ export function AgentPanel({ host, agentUrl }: AgentPanelProps) {
     });
   };
 
+  const checks = checkEntries(snapshot.messages);
   const visible = snapshot.messages.filter(
-    (m) => (m.role === 'user' || m.role === 'assistant') && textOf(m) !== '',
+    (m) => ((m.role === 'user' || m.role === 'assistant') && textOf(m) !== '') || checks.has(m.id),
   );
 
   const submit = () => {
@@ -73,12 +96,16 @@ export function AgentPanel({ host, agentUrl }: AgentPanelProps) {
       </h2>
       {/* role="log" is not allowed on <ol>, so the log is a div of message blocks. */}
       <div className="margin-panel__log" role="log" aria-label="Conversation" aria-live="polite">
-        {visible.map((m) => (
-          <div key={m.id} className={`margin-panel__msg margin-panel__msg--${m.role}`}>
-            <span className="margin-panel__who">{m.role === 'user' ? 'You' : 'Agent'}</span>
-            <p>{textOf(m)}</p>
-          </div>
-        ))}
+        {visible.map((m) => {
+          const check = checks.get(m.id);
+          if (check) return <CheckSummary key={m.id} entry={check} />;
+          return (
+            <div key={m.id} className={`margin-panel__msg margin-panel__msg--${m.role}`}>
+              <span className="margin-panel__who">{m.role === 'user' ? 'You' : 'Agent'}</span>
+              <p>{textOf(m)}</p>
+            </div>
+          );
+        })}
       </div>
       {snapshot.proposals.length > 0 && (
         <section className="margin-panel__proposals" aria-label="Proposals">

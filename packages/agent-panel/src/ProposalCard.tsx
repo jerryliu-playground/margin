@@ -17,7 +17,8 @@ const STATUS_TEXT: Record<Exclude<ProposalStatus, 'pending'>, string> = {
 
 function titleOf(p: Proposal): string {
   if (p.kind === 'field') return p.label;
-  return p.blockType === 'heading' ? 'Heading edit' : 'Body edit';
+  if (p.blockType === 'heading') return 'Heading edit';
+  return p.blockType === 'image' ? 'Image edit' : 'Body edit';
 }
 
 function Diff({ before, after }: { before: string; after: string }) {

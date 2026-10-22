@@ -166,7 +166,10 @@ describe('agent session', () => {
       agentUrl: 'http://x',
       createAgent: () => agent,
     });
+    const seen = new Set<string>();
+    session.subscribe(() => seen.add(session.getSnapshot().activity));
     await session.send('Check accessibility');
+    expect(seen).toContain('checking-a11y');
     expect(session.getSnapshot().proposals).toEqual([]);
     expect(agent.inputs).toHaveLength(1);
     const tools = session.getSnapshot().messages.filter((m) => m.role === 'tool');

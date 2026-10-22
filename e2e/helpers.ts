@@ -31,7 +31,9 @@ export async function ask(page: Page, message: string): Promise<void> {
   await panel(page).getByRole('button', { name: 'Send' }).click();
 }
 
-export async function expectNoAxeViolations(page: Page): Promise<void> {
-  const axe = await new AxeBuilder({ page }).analyze();
+/** Runs axe on the whole page, or only inside `include` (a CSS selector). */
+export async function expectNoAxeViolations(page: Page, include?: string): Promise<void> {
+  const builder = new AxeBuilder({ page });
+  const axe = await (include ? builder.include(include) : builder).analyze();
   expect(axe.violations, JSON.stringify(axe.violations, null, 2)).toEqual([]);
 }
