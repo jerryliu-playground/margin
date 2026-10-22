@@ -1,0 +1,22 @@
+{
+  "name": "@margin/server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "start": "tsx src/main.ts",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@fastify/cors": "11.3.1",
+    "@margin/shared": "workspace:*",
+    "ai": "7.0.143",
+    "fastify": "5.12.7",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@ai-sdk/provider": "4.0.31",
+    "tsx": "4.23.15"
+  }
+}

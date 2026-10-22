@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    // The AI SDK's ToolSet types (ai 7.0.x) reject valid tools under exactOptionalPropertyTypes.
+    // Re-enable when the SDK supports it; see docs/adr/0007-toolchain-versions.md.
+    "exactOptionalPropertyTypes": false
+  },
+  "include": ["src"]
+}

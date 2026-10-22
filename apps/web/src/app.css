@@ -1,0 +1,16 @@
+body {
+  margin: 0;
+  font:
+    16px/1.5 system-ui,
+    sans-serif;
+  color: #1f2328;
+  background: #ffffff;
+}
+.app {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  min-height: 100vh;
+}
+.app__main {
+  padding: 24px 32px;
+}
