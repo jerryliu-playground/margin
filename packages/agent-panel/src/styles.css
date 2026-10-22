@@ -78,3 +78,69 @@
   outline: 2px solid #0969da;
   outline-offset: 2px;
 }
+.margin-panel .margin-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.margin-panel__proposals {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.margin-proposal {
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: grid;
+  gap: 6px;
+}
+.margin-proposal--accepted {
+  border-color: #1a7f37;
+}
+.margin-proposal--rejected,
+.margin-proposal--stale {
+  color: #57606a;
+}
+.margin-proposal__title {
+  margin: 0;
+  font-size: 14px;
+}
+.margin-proposal__reason,
+.margin-proposal__status {
+  margin: 0;
+  color: #57606a;
+}
+.margin-proposal__diff {
+  margin: 0;
+  white-space: pre-wrap;
+}
+.margin-proposal__diff del {
+  background: #ffebe9;
+  color: #82071e;
+}
+.margin-proposal__diff ins {
+  background: #dafbe1;
+  color: #116329;
+  text-decoration: none;
+}
+.margin-proposal__warning {
+  margin: 0;
+  color: #9a6700;
+}
+.margin-proposal__actions {
+  display: grid;
+  gap: 6px;
+}
+.margin-proposal__reason-label {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+}
+.margin-proposal__buttons {
+  display: flex;
+  gap: 8px;
+}

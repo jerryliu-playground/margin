@@ -1,10 +1,11 @@
 import { HttpAgent, type AbstractAgent, type AgentSubscriber, type Message } from '@ag-ui/client';
 import { frontendToolDefinitions, type AgentState, type EditorHost } from '@margin/shared';
+import { isStale, parseProposal, resultFor, type Proposal } from './proposals';
 
 /** What the panel shows about the current run. */
 export type Activity = 'idle' | 'reading' | 'writing' | 'proposing';
 
-/** A frontend tool call the agent made, waiting for the user (proposal cards build on this). */
+/** A frontend tool call as the agent made it. */
 export interface ToolCallRequest {
   toolCallId: string;
   toolName: string;
@@ -16,7 +17,10 @@ export interface SessionSnapshot {
   activity: Activity;
   running: boolean;
   error?: string | undefined;
-  toolCalls: readonly ToolCallRequest[];
+  /** Every proposal in this conversation, oldest first. */
+  proposals: readonly Proposal[];
+  /** Pending body proposals whose block changed since they were made. */
+  outdated: ReadonlySet<string>;
 }
 
 export interface AgentSessionOptions {
@@ -38,7 +42,17 @@ export function createAgentSession({ host, agentUrl, createAgent }: AgentSession
   const url = `${agentUrl.replace(/\/$/, '')}/agent`;
   const agent = createAgent ? createAgent(url) : new HttpAgent({ url });
   const listeners = new Set<() => void>();
-  let snapshot: SessionSnapshot = { messages: [], activity: 'idle', running: false, toolCalls: [] };
+  let snapshot: SessionSnapshot = {
+    messages: [],
+    activity: 'idle',
+    running: false,
+    proposals: [],
+    outdated: new Set(),
+  };
+  /** The current turn's tool calls, and the answers given so far (tool message content). */
+  let batch: string[] = [];
+  const answers = new Map<string, string>();
+  let invalidStreak = 0;
 
   const update = (patch: Partial<SessionSnapshot>) => {
     snapshot = { ...snapshot, ...patch };
@@ -51,13 +65,20 @@ export function createAgentSession({ host, agentUrl, createAgent }: AgentSession
       if (snapshot.activity !== 'writing') update({ activity: 'writing' });
     },
     onToolCallStartEvent: () => update({ activity: 'proposing' }),
-    onToolCallEndEvent: ({ event, toolCallName, toolCallArgs }) =>
-      update({
-        toolCalls: [
-          ...snapshot.toolCalls,
-          { toolCallId: event.toolCallId, toolName: toolCallName, args: toolCallArgs },
-        ],
-      }),
+    onToolCallEndEvent: ({ event, toolCallName, toolCallArgs }) => {
+      const call = { toolCallId: event.toolCallId, toolName: toolCallName, args: toolCallArgs };
+      batch.push(call.toolCallId);
+      const parsed = parseProposal(call, host);
+      if (parsed.ok) {
+        update({ proposals: [...snapshot.proposals, parsed.proposal] });
+      } else {
+        // Never shown as a card; the agent is told why and can try again.
+        answers.set(
+          call.toolCallId,
+          JSON.stringify({ status: 'rejected', reason: `Invalid proposal: ${parsed.error}` }),
+        );
+      }
+    },
     onMessagesChanged: ({ messages }) => update({ messages: [...messages] }),
     onRunErrorEvent: ({ event }) => update({ error: event.message }),
   };
@@ -78,7 +99,72 @@ export function createAgentSession({ host, agentUrl, createAgent }: AgentSession
     } finally {
       update({ running: false, activity: 'idle', messages: [...agent.messages] });
     }
+    await continueIfAnswered();
   }
+
+  /** When every tool call of the turn has an answer, send them all in one new run. */
+  async function continueIfAnswered(): Promise<void> {
+    if (snapshot.running || batch.length === 0 || !batch.every((id) => answers.has(id))) return;
+    const results = batch.map((toolCallId) => ({
+      toolCallId,
+      content: answers.get(toolCallId) ?? '',
+    }));
+    const allInvalid = batch.every((id) => !snapshot.proposals.some((p) => p.toolCallId === id));
+    batch = [];
+    answers.clear();
+    invalidStreak = allInvalid ? invalidStreak + 1 : 0;
+    if (invalidStreak > 2) {
+      update({ error: 'The agent kept making proposals that could not be used. Try rephrasing.' });
+      return;
+    }
+    await answer(results);
+  }
+
+  async function answer(results: { toolCallId: string; content: string }[]): Promise<void> {
+    for (const r of results) {
+      agent.addMessage({
+        id: newId('tool'),
+        role: 'tool',
+        toolCallId: r.toolCallId,
+        content: r.content,
+      });
+    }
+    update({ messages: [...agent.messages] });
+    await run();
+  }
+
+  function resolve(toolCallId: string, patch: Partial<Proposal>): Proposal | undefined {
+    let resolved: Proposal | undefined;
+    const proposals = snapshot.proposals.map((p) => {
+      if (p.toolCallId !== toolCallId) return p;
+      resolved = { ...p, ...patch } as Proposal;
+      return resolved;
+    });
+    if (!resolved) return undefined;
+    answers.set(toolCallId, JSON.stringify(resultFor(resolved)));
+    update({ proposals, outdated: outdatedSet(proposals) });
+    return resolved;
+  }
+
+  function outdatedSet(proposals: readonly Proposal[]): ReadonlySet<string> {
+    const state = host.getState();
+    return new Set(
+      proposals.filter((p) => p.status === 'pending' && isStale(p, state)).map((p) => p.toolCallId),
+    );
+  }
+
+  const pendingProposal = (toolCallId: string) =>
+    snapshot.proposals.find((p) => p.toolCallId === toolCallId && p.status === 'pending');
+
+  const unsubscribeHost = host.subscribe(() => {
+    const outdated = outdatedSet(snapshot.proposals);
+    if (
+      outdated.size !== snapshot.outdated.size ||
+      [...outdated].some((id) => !snapshot.outdated.has(id))
+    ) {
+      update({ outdated });
+    }
+  });
 
   return {
     getSnapshot: () => snapshot,
@@ -96,24 +182,36 @@ export function createAgentSession({ host, agentUrl, createAgent }: AgentSession
       update({ messages: [...agent.messages] });
       await run();
     },
-    /** Adds tool results (the user's answers) and continues the conversation. */
-    async answer(results: { toolCallId: string; content: string }[]): Promise<void> {
-      for (const r of results) {
-        agent.addMessage({
-          id: newId('tool'),
-          role: 'tool',
-          toolCallId: r.toolCallId,
-          content: r.content,
-        });
+    /** Applies a proposal through the host. A changed block makes it stale instead. */
+    async accept(toolCallId: string): Promise<void> {
+      const proposal = pendingProposal(toolCallId);
+      if (!proposal) return;
+      if (isStale(proposal, host.getState())) {
+        resolve(toolCallId, { status: 'stale' });
+      } else {
+        try {
+          if (proposal.kind === 'field') await host.applyFieldValue(proposal.field, proposal.after);
+          else await host.applyBodyEdit(proposal.blockId, proposal.after);
+          resolve(toolCallId, { status: 'accepted' });
+        } catch (error) {
+          resolve(toolCallId, {
+            status: 'rejected',
+            rejectReason: `Could not apply: ${(error as Error).message}`,
+          });
+        }
       }
-      const answered = new Set(results.map((r) => r.toolCallId));
-      update({
-        messages: [...agent.messages],
-        toolCalls: snapshot.toolCalls.filter((c) => !answered.has(c.toolCallId)),
-      });
-      await run();
+      await continueIfAnswered();
+    },
+    /** Rejects a proposal; the optional reason goes back to the agent. A stale one is dismissed. */
+    async reject(toolCallId: string, reason?: string): Promise<void> {
+      const proposal = pendingProposal(toolCallId);
+      if (!proposal) return;
+      if (snapshot.outdated.has(toolCallId)) resolve(toolCallId, { status: 'stale' });
+      else resolve(toolCallId, { status: 'rejected', rejectReason: reason?.trim() || undefined });
+      await continueIfAnswered();
     },
     stop: () => agent.abortRun(),
+    dispose: () => unsubscribeHost(),
   };
 }
 

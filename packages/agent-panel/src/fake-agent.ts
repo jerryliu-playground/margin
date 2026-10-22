@@ -53,10 +53,14 @@ export const toolCall = (
 ];
 
 /** In-memory EditorHost for panel tests. */
-export function fakeHost(): EditorHost & {
+export interface FakeHost extends EditorHost {
   fields: Record<string, unknown>;
   blocks: { blockId: string; type: string; text: string }[];
-} {
+  /** Simulates the user typing into a block. */
+  editBlock(blockId: string, text: string): void;
+}
+
+export function fakeHost(): FakeHost {
   const listeners = new Set<(s: ReturnType<EditorHost['getState']>) => void>();
   const host = {
     fields: { title: 'Hello', metaDescription: '' } as Record<string, unknown>,
@@ -93,6 +97,10 @@ export function fakeHost(): EditorHost & {
       host.changed();
     },
     getAuthToken: () => Promise.resolve('test-token'),
+    editBlock(blockId: string, text: string) {
+      host.blocks = host.blocks.map((b) => (b.blockId === blockId ? { ...b, text } : b));
+      host.changed();
+    },
   };
   return host;
 }

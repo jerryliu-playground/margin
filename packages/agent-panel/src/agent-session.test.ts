@@ -41,7 +41,8 @@ describe('agent session', () => {
     expect(seen).toContain('writing');
   });
 
-  it('collects tool calls and sends answers as tool messages in the next run', async () => {
+  it('applies an accepted proposal through the host and continues the run', async () => {
+    const host = fakeHost();
     const agent = new FakeAgent([
       (i) => [
         started(i),
@@ -50,28 +51,98 @@ describe('agent session', () => {
       ],
       (i) => [started(i), ...text('m2', 'Done.'), finished(i)],
     ]);
+    const session = createAgentSession({ host, agentUrl: 'http://x', createAgent: () => agent });
+    await session.send('Shorter title');
+    expect(session.getSnapshot().proposals).toEqual([
+      expect.objectContaining({
+        toolCallId: 'c1',
+        status: 'pending',
+        before: 'Hello',
+        after: 'Hi',
+      }),
+    ]);
+    expect(agent.inputs).toHaveLength(1);
+
+    await session.accept('c1');
+    expect(host.fields.title).toBe('Hi');
+    expect(session.getSnapshot().proposals[0]?.status).toBe('accepted');
+    expect(agent.inputs[1]?.messages.at(-1)).toMatchObject({
+      role: 'tool',
+      toolCallId: 'c1',
+      content: '{"status":"accepted"}',
+    });
+  });
+
+  it('waits for every proposal of a turn, then answers them together', async () => {
+    const host = fakeHost();
+    const agent = new FakeAgent([
+      (i) => [
+        started(i),
+        ...toolCall('c1', 'proposeFieldValue', { field: 'title', value: 'A', reason: 'r' }),
+        ...toolCall('c2', 'proposeFieldValue', {
+          field: 'metaDescription',
+          value: 'B',
+          reason: 'r',
+        }),
+        finished(i, ['c1', 'c2']),
+      ],
+      (i) => [started(i), finished(i)],
+    ]);
+    const session = createAgentSession({ host, agentUrl: 'http://x', createAgent: () => agent });
+    await session.send('Two things');
+    await session.reject('c2', 'Too vague');
+    expect(agent.inputs).toHaveLength(1);
+    expect(host.fields.metaDescription).toBe('');
+    await session.accept('c1');
+    const tools = agent.inputs[1]?.messages.filter((m) => m.role === 'tool');
+    expect(tools?.map((m) => [m.toolCallId, m.content])).toEqual([
+      ['c1', '{"status":"accepted"}'],
+      ['c2', '{"status":"rejected","reason":"Too vague"}'],
+    ]);
+  });
+
+  it('marks a body proposal outdated when its block changes, and dismisses it as stale', async () => {
+    const host = fakeHost();
+    const agent = new FakeAgent([
+      (i) => [
+        started(i),
+        ...toolCall('c1', 'proposeBodyEdit', {
+          blockId: 'p1',
+          newContent: { type: 'paragraph', text: 'Short.' },
+          reason: 'Tighter.',
+        }),
+        finished(i, ['c1']),
+      ],
+      (i) => [started(i), finished(i)],
+    ]);
+    const session = createAgentSession({ host, agentUrl: 'http://x', createAgent: () => agent });
+    await session.send('Tighten');
+    host.editBlock('p1', 'Typed by the user.');
+    expect(session.getSnapshot().outdated.has('c1')).toBe(true);
+
+    await session.accept('c1'); // refused: the block changed
+    expect(host.blocks[0]?.text).toBe('Typed by the user.');
+    expect(session.getSnapshot().proposals[0]?.status).toBe('stale');
+    expect(agent.inputs[1]?.messages.at(-1)).toMatchObject({ content: '{"status":"stale"}' });
+  });
+
+  it('answers an invalid proposal automatically without showing a card', async () => {
+    const agent = new FakeAgent([
+      (i) => [
+        started(i),
+        ...toolCall('c1', 'proposeFieldValue', { field: 'nope', value: 'x', reason: 'r' }),
+        finished(i, ['c1']),
+      ],
+      (i) => [started(i), ...text('m2', 'Sorry.'), finished(i)],
+    ]);
     const session = createAgentSession({
       host: fakeHost(),
       agentUrl: 'http://x',
       createAgent: () => agent,
     });
-    await session.send('Shorter title');
-    expect(session.getSnapshot().toolCalls).toEqual([
-      {
-        toolCallId: 'c1',
-        toolName: 'proposeFieldValue',
-        args: { field: 'title', value: 'Hi', reason: 'Shorter.' },
-      },
-    ]);
-
-    await session.answer([{ toolCallId: 'c1', content: '{"status":"accepted"}' }]);
-    const second = agent.inputs[1];
-    expect(second?.messages.at(-1)).toMatchObject({
-      role: 'tool',
-      toolCallId: 'c1',
-      content: '{"status":"accepted"}',
-    });
-    expect(session.getSnapshot().toolCalls).toEqual([]);
+    await session.send('Do something');
+    expect(session.getSnapshot().proposals).toEqual([]);
+    expect(agent.inputs[1]?.messages.at(-1)?.content).toContain('Invalid proposal: Unknown field');
   });
 
   it('shows a run error', async () => {

@@ -1,7 +1,8 @@
 import type { Message } from '@ag-ui/client';
 import type { EditorHost } from '@margin/shared';
-import { useId, useState, type KeyboardEvent } from 'react';
-import type { Activity } from './agent-session';
+import { useId, useRef, useState, type KeyboardEvent } from 'react';
+import type { Activity, AgentSession } from './agent-session';
+import { ProposalCard } from './ProposalCard';
 import { useAgentSession } from './useAgentSession';
 
 export interface AgentPanelProps {
@@ -27,6 +28,26 @@ export function AgentPanel({ host, agentUrl }: AgentPanelProps) {
   const inputId = useId();
   const [session, snapshot] = useAgentSession(host, agentUrl);
   const [draft, setDraft] = useState('');
+  const rootRef = useRef<HTMLElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  /**
+   * After Accept/Reject, focus moves to the next pending proposal, or to the message box
+   * when none is left (CLAUDE.md rule 6). Focus never leaves the panel.
+   */
+  const answer = (act: (s: AgentSession) => Promise<void>) => {
+    const done = act(session);
+    const next = session.getSnapshot().proposals.find((p) => p.status === 'pending');
+    requestAnimationFrame(() => {
+      const target = next
+        ? rootRef.current?.querySelector<HTMLButtonElement>(
+            `[data-proposal="${CSS.escape(next.toolCallId)}"] button`,
+          )
+        : inputRef.current;
+      target?.focus();
+    });
+    void done;
+  };
 
   const visible = snapshot.messages.filter(
     (m) => (m.role === 'user' || m.role === 'assistant') && textOf(m) !== '',
@@ -45,7 +66,7 @@ export function AgentPanel({ host, agentUrl }: AgentPanelProps) {
   };
 
   return (
-    <aside className="margin-panel" aria-labelledby={headingId}>
+    <aside className="margin-panel" aria-labelledby={headingId} ref={rootRef}>
       <h2 id={headingId} className="margin-panel__title">
         Agent
       </h2>
@@ -58,6 +79,19 @@ export function AgentPanel({ host, agentUrl }: AgentPanelProps) {
           </div>
         ))}
       </div>
+      {snapshot.proposals.length > 0 && (
+        <section className="margin-panel__proposals" aria-label="Proposals">
+          {snapshot.proposals.map((p) => (
+            <ProposalCard
+              key={p.toolCallId}
+              proposal={p}
+              outdated={snapshot.outdated.has(p.toolCallId)}
+              onAccept={() => answer((s) => s.accept(p.toolCallId))}
+              onReject={(reason) => answer((s) => s.reject(p.toolCallId, reason))}
+            />
+          ))}
+        </section>
+      )}
       <p className="margin-panel__status" role="status">
         {ACTIVITY_TEXT[snapshot.activity]}
       </p>
@@ -78,6 +112,7 @@ export function AgentPanel({ host, agentUrl }: AgentPanelProps) {
         </label>
         <textarea
           id={inputId}
+          ref={inputRef}
           className="margin-panel__input"
           rows={3}
           value={draft}

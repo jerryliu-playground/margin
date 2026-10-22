@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "@ag-ui/client": "1.0.3",
-    "@margin/shared": "workspace:*"
+    "@margin/shared": "workspace:*",
+    "zod": "4.6.7"
   },
   "peerDependencies": {
     "react": "^18.3.0 || ^19.0.0"
