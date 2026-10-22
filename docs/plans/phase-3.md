@@ -27,12 +27,12 @@ PR A (`phase-3` branch):
 
 After PR A is merged:
 
-- [ ] **P3.8 Go live** — the owner creates the Fly app, sets `ANTHROPIC_API_KEY` and `MARGIN_TOKEN_SECRET` with `fly secrets set`, adds `FLY_API_TOKEN` to GitHub; first deploy; real-model smoke test, including on a phone (SSE on iOS Safari).
+- [x] **P3.8 Go live** — the owner creates the Fly app, sets `ANTHROPIC_API_KEY` and `MARGIN_TOKEN_SECRET` with `fly secrets set`, adds `FLY_API_TOKEN` to GitHub; first deploy; real-model smoke test, including on a phone (SSE on iOS Safari). Done 2026-10-22: live at https://margin-demo.fly.dev; real-model check and accept flow pass; the phone-width layout was broken (fixed on the next branch); iOS Safari still to test on a real device.
 
 PR B:
 
-- [ ] **P3.9 README** — what it is, architecture, how AG-UI is used, the harness (guides, sensors, steering loop with harness-log evidence), running locally, ADR index, live link.
-- [ ] **P3.10 Demo script** — 2–3 minute shot list and narration for the owner to record. `docs/demo-script.md`.
+- [x] **P3.9 README** — what it is, architecture, how AG-UI is used, the harness (guides, sensors, steering loop with harness-log evidence), running locally, ADR index, live link.
+- [x] **P3.10 Demo script** — 2–3 minute shot list and narration for the owner to record. `docs/demo-script.md`.
 
 ## Owner-only actions
 
