@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { loadConfig } from './config';
 import { testApp } from './testing/test-app';
@@ -35,6 +38,20 @@ describe('server', () => {
     expect(res.statusCode).toBe(429);
     expect(res.json()).toMatchObject({ error: { code: 'rate_limited' } });
     await app.close();
+  });
+
+  it('serves the built web app from the same origin when MARGIN_WEB_DIST is set', async () => {
+    const dist = mkdtempSync(join(tmpdir(), 'margin-dist-'));
+    writeFileSync(join(dist, 'index.html'), '<!doctype html><title>Margin</title>');
+    const app = await testApp({ MARGIN_WEB_DIST: dist });
+    const page = await app.inject({ method: 'GET', url: '/' });
+    expect(page.statusCode).toBe(200);
+    expect(page.headers['content-type']).toContain('text/html');
+    expect(page.body).toContain('<title>Margin</title>');
+    const health = await app.inject({ method: 'GET', url: '/health' });
+    expect(health.json()).toEqual({ status: 'ok' });
+    await app.close();
+    rmSync(dist, { recursive: true, force: true });
   });
 
   it('refuses the anthropic model without a key', () => {

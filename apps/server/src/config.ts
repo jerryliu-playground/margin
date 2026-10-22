@@ -11,6 +11,10 @@ const envSchema = z.object({
   MARGIN_ANTHROPIC_MODEL: z.string().min(1).default('claude-haiku-5-5'),
   /** Output cap per agent run (SPEC §6). Includes thinking tokens. */
   MARGIN_MAX_OUTPUT_TOKENS: z.coerce.number().int().positive().max(64_000).default(16_000),
+  /** Interface to listen on. 0.0.0.0 inside a container. */
+  HOST: z.string().min(1).default('127.0.0.1'),
+  /** Built web app (apps/web/dist) to serve from this process, for one-origin production. */
+  MARGIN_WEB_DIST: z.string().min(1).optional(),
   /** SQLite file path, or ":memory:". */
   MARGIN_DB_PATH: z.string().min(1).default('./data/margin.db'),
   /** HMAC secret for short-lived tokens. Required in production. */

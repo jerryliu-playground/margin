@@ -1,6 +1,8 @@
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
 import sse from '@fastify/sse';
+import fastifyStatic from '@fastify/static';
+import { resolve } from 'node:path';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { createModelFactory } from './agent/model';
 import { agentRoutes } from './agent/routes';
@@ -59,6 +61,12 @@ export async function buildApp(config: Config): Promise<FastifyInstance> {
   });
 
   app.get('/health', async () => ({ status: 'ok' as const }));
+
+  // Production: the web app is served from the same origin as the API (ADR 0009).
+  // API routes are more specific than the static wildcard, so they keep winning.
+  if (config.MARGIN_WEB_DIST) {
+    await app.register(fastifyStatic, { root: resolve(config.MARGIN_WEB_DIST), maxAge: '1h' });
+  }
   app.post(
     '/auth/token',
     { config: { rateLimit: { max: 30, timeWindow: '1 minute' } } },

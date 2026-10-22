@@ -25,3 +25,25 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the production image
+        run: docker build -t margin:ci .
+      - name: Smoke test the image (mock model, no API key)
+        run: |
+          docker run -d --name margin -p 8080:8080 \
+            -e MARGIN_MODEL=mock \
+            -e MARGIN_TOKEN_SECRET=ci-only-secret-that-is-at-least-32-chars \
+            -e MARGIN_DB_PATH=/tmp/margin.db \
+            margin:ci
+          for i in $(seq 1 30); do curl -fs http://localhost:8080/health && break; sleep 1; done
+          curl -fs http://localhost:8080/health | grep -q '"ok"'
+          curl -fs http://localhost:8080/ | grep -q 'id="root"'
+          curl -fs -X POST http://localhost:8080/auth/token | grep -q '"token"'
+      - name: Container logs
+        if: always()
+        run: docker logs margin || true
