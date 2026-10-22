@@ -21,7 +21,7 @@ PR A (`phase-3` branch):
 - [x] **P3.2 No duplicate issue list** — the check result already lists the issues; the agent says what it will fix instead of listing them again. Prompt + mock model. `apps/server`.
 - [x] **P3.3 Production build** — the server serves `apps/web/dist` (same origin); multi-stage `Dockerfile`; CI builds the image. `apps/server`, `Dockerfile`, `.github/workflows/ci.yml`.
 - [x] **P3.4 Public-demo protection** — `trustProxy`, daily agent-run cap with a plain message, document cap, nightly reset to the seed. `apps/server`.
-- [ ] **P3.5 Tone presets (feature 11)** — "More formal", "Shorter", "Friendlier" buttons in the panel; mock-model scripts. `packages/agent-panel`, `apps/server`.
+- [x] **P3.5 Tone presets (feature 11)** — "More formal", "Shorter", "Friendlier" buttons in the panel; mock-model scripts. `packages/agent-panel`, `apps/server`.
 - [ ] **P3.6 Batch review (feature 10)** — "Accept all" / "Reject all" when a turn has several pending proposals; focus handled. `packages/agent-panel`.
 - [ ] **P3.7 Deploy config** — `fly.toml`, volume, health check, deploy workflow on `main`; ADR 0009 (hosting). Root, `.github/workflows/`, `docs/adr/`.
 

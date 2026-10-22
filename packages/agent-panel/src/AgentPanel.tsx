@@ -3,6 +3,7 @@ import type { EditorHost } from '@margin/shared';
 import { useId, useRef, useState, type KeyboardEvent } from 'react';
 import type { Activity, AgentSession } from './agent-session';
 import { CHECK_TITLE, checkEntries, type CheckEntry } from './checks';
+import { TONE_PRESETS } from './presets';
 import { ProposalCard } from './ProposalCard';
 import { useAgentSession } from './useAgentSession';
 
@@ -133,6 +134,19 @@ export function AgentPanel({ host, agentUrl }: AgentPanelProps) {
           {snapshot.error}
         </p>
       )}
+      <div className="margin-panel__presets" role="group" aria-label="Tone">
+        {TONE_PRESETS.map((preset) => (
+          <button
+            key={preset.label}
+            type="button"
+            className="margin-panel__button"
+            disabled={snapshot.running}
+            onClick={() => void session.send(preset.prompt)}
+          >
+            {preset.label}
+          </button>
+        ))}
+      </div>
       <form
         className="margin-panel__form"
         onSubmit={(e) => {
