@@ -1,17 +1,27 @@
-import type { LanguageModelV4, LanguageModelV4StreamPart } from '@ai-sdk/provider';
+import type {
+  LanguageModelV4,
+  LanguageModelV4Prompt,
+  LanguageModelV4StreamPart,
+} from '@ai-sdk/provider';
 import {
+  checkResultSchema,
   proposalResultSchema,
   type AgentRunRequest,
   type BodyBlock,
+  type CheckResult,
   type ProposeBodyEditArgs,
   type ProposeFieldValueArgs,
+  type SeoCheckArgs,
 } from '@margin/shared';
 import { simulateReadableStream } from 'ai';
 
 /**
- * Deterministic stand-in for Claude (CLAUDE.md rule 5). It reads the run request and
- * answers from a fixed script, keyed by the last message:
- * - a tool result      -> one short sentence about the outcome
+ * Deterministic stand-in for Claude (CLAUDE.md rule 5). It reads the run request and the
+ * prompt of the current step, and answers from a fixed script keyed by the last message:
+ * - a check result     -> a short issue list, plus proposals that fix what it can
+ * - a proposal answer  -> one short sentence about the outcome
+ * - "accessibility"    -> a11yCheck (runs on the server, then the next step continues)
+ * - "check seo"        -> seoCheck
  * - "meta description" -> proposeFieldValue(metaDescription)
  * - "title and tags"   -> two proposals in one turn
  * - "title" / "tags"   -> proposeFieldValue(title | tags)
@@ -20,7 +30,9 @@ import { simulateReadableStream } from 'ai';
  */
 type Call =
   | { name: 'proposeFieldValue'; args: ProposeFieldValueArgs }
-  | { name: 'proposeBodyEdit'; args: ProposeBodyEditArgs };
+  | { name: 'proposeBodyEdit'; args: ProposeBodyEditArgs }
+  | { name: 'a11yCheck'; args: Record<string, never> }
+  | { name: 'seoCheck'; args: SeoCheckArgs };
 interface Reply {
   text?: string;
   calls?: Call[];
@@ -43,7 +55,73 @@ function paragraphs(body: BodyBlock[]) {
   return body.filter((b) => b.type === 'paragraph' && b.text.trim() !== '');
 }
 
-export function scriptedReply(request: AgentRunRequest): Reply {
+/** The last tool result in the step's prompt, if the prompt ends with one. */
+function lastToolResult(
+  prompt: LanguageModelV4Prompt,
+): { toolName: string; value: unknown } | undefined {
+  const last = prompt.at(-1);
+  if (last?.role !== 'tool') return undefined;
+  const part = [...last.content].reverse().find((p) => p.type === 'tool-result');
+  if (!part || part.type !== 'tool-result') return undefined;
+  const { output } = part;
+  const value =
+    output.type === 'json'
+      ? output.value
+      : output.type === 'text'
+        ? (() => {
+            try {
+              return JSON.parse(output.value) as unknown;
+            } catch {
+              return undefined;
+            }
+          })()
+        : undefined;
+  return { toolName: part.toolName, value };
+}
+
+function checkReply(toolName: string, result: CheckResult, request: AgentRunRequest): Reply {
+  const lines = result.issues.slice(0, 5).map((i) => `- ${i.message}`);
+  const calls: Call[] = [];
+  const { body, fields } = request.state.document;
+  for (const issue of result.issues) {
+    const block = body.find((b) => b.blockId === issue.blockId);
+    if (issue.rule === 'image-alt-missing' && block?.type === 'image') {
+      const src = /\]\(([^)\s]+)\)/.exec(block.text)?.[1] ?? '';
+      calls.push({
+        name: 'proposeBodyEdit',
+        args: {
+          blockId: block.blockId,
+          newContent: { type: 'image', text: `![Bar chart from the article](${src})` },
+          reason: 'Adds alt text so screen reader users know what the image shows.',
+        },
+      });
+    }
+    if (issue.rule === 'meta-missing') {
+      const lead =
+        paragraphs(body)[0]?.text ?? (typeof fields.title === 'string' ? fields.title : '');
+      calls.push({
+        name: 'proposeFieldValue',
+        args: {
+          field: 'metaDescription',
+          value: cutAtWord(lead.replace(/[*_`]/g, ''), 155) || 'A short article.',
+          reason: 'Adds the missing meta description.',
+        },
+      });
+    }
+  }
+  const what = toolName === 'a11yCheck' ? 'Accessibility' : 'SEO';
+  return { text: [`${what} check: ${result.summary}`, ...lines].join('\n'), calls };
+}
+
+export function scriptedReply(request: AgentRunRequest, prompt: LanguageModelV4Prompt = []): Reply {
+  const toolResult = lastToolResult(prompt);
+  if (toolResult && (toolResult.toolName === 'a11yCheck' || toolResult.toolName === 'seoCheck')) {
+    const result = checkResultSchema.safeParse(toolResult.value);
+    return result.success
+      ? checkReply(toolResult.toolName, result.data, request)
+      : { text: 'The check could not run.' };
+  }
+
   const last = request.messages.at(-1);
   if (last?.role === 'tool') {
     const result = proposalResultSchema.safeParse(JSON.parse(last.content || '{}'));
@@ -92,6 +170,12 @@ export function scriptedReply(request: AgentRunRequest): Reply {
     },
   };
 
+  if (ask.includes('accessib')) {
+    return { text: 'Checking accessibility.', calls: [{ name: 'a11yCheck', args: {} }] };
+  }
+  if (ask.includes('check seo') || ask.includes('seo check')) {
+    return { text: 'Checking SEO.', calls: [{ name: 'seoCheck', args: {} }] };
+  }
   if (ask.includes('meta description'))
     return { text: 'Here is a meta description.', calls: [meta] };
   if (ask.includes('title and tags'))
@@ -154,9 +238,9 @@ export function createMockModel(request: AgentRunRequest): LanguageModelV4 {
     modelId: 'scripted',
     supportedUrls: {},
     doGenerate: () => Promise.reject(new Error('The mock model only streams.')),
-    doStream: async () => ({
+    doStream: async ({ prompt }) => ({
       stream: simulateReadableStream({
-        chunks: toStreamParts(scriptedReply(request)),
+        chunks: toStreamParts(scriptedReply(request, prompt)),
         chunkDelayInMs: 5,
       }),
     }),

@@ -1,6 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import { EventType, type BaseEvent } from '@ag-ui/core';
-import { frontendTools, type AgentRunRequest, type FrontendToolName } from '@margin/shared';
+import {
+  a11yCheck,
+  frontendTools,
+  seoCheck,
+  serverTools,
+  type AgentRunRequest,
+  type FrontendToolName,
+  type ServerToolName,
+} from '@margin/shared';
 import { stepCountIs, streamText, tool, type LanguageModel, type LanguageModelUsage } from 'ai';
 import { toModelMessages } from './messages';
 import { systemPrompt } from './prompt';
@@ -16,13 +24,18 @@ export interface RunOptions {
 }
 
 const isFrontendTool = (name: string): name is FrontendToolName => name in frontendTools;
+const isServerTool = (name: string): name is ServerToolName => name in serverTools;
+const isKnownTool = (name: string) => isFrontendTool(name) || isServerTool(name);
 
 /**
  * Frontend tools offered by the client, with our own shared schemas (CLAUDE.md rule 2).
  * They have no `execute`, so the model's turn ends at the call (ADR 0003).
+ * Server tools (a11yCheck, seoCheck) always run here, on the document state of this run;
+ * the model reads their result and continues in the same run.
  */
-function frontendToolSet(request: AgentRunRequest) {
-  const all = {
+function toolSet(request: AgentRunRequest) {
+  const document = request.state.document;
+  const frontend = {
     proposeFieldValue: tool({
       description: frontendTools.proposeFieldValue.description,
       inputSchema: frontendTools.proposeFieldValue.args,
@@ -33,7 +46,19 @@ function frontendToolSet(request: AgentRunRequest) {
     }),
   };
   const offered = new Set(request.tools.map((t) => t.name));
-  return Object.fromEntries(Object.entries(all).filter(([name]) => offered.has(name)));
+  return {
+    ...Object.fromEntries(Object.entries(frontend).filter(([name]) => offered.has(name))),
+    a11yCheck: tool({
+      description: serverTools.a11yCheck.description,
+      inputSchema: serverTools.a11yCheck.args,
+      execute: async () => a11yCheck(document),
+    }),
+    seoCheck: tool({
+      description: serverTools.seoCheck.description,
+      inputSchema: serverTools.seoCheck.args,
+      execute: async (args) => seoCheck(document, args),
+    }),
+  };
 }
 
 /**
@@ -69,7 +94,7 @@ export async function* runAgent({
       model,
       system: systemPrompt(request.state),
       messages: toModelMessages(request.messages),
-      tools: frontendToolSet(request),
+      tools: toolSet(request),
       maxOutputTokens,
       stopWhen: stepCountIs(4),
       ...(signal ? { abortSignal: signal } : {}),
@@ -86,11 +111,17 @@ export async function* runAgent({
           yield { type: EventType.TEXT_MESSAGE_CONTENT, messageId, delta: part.text } as BaseEvent;
           break;
 
+        case 'start-step':
+          // Each model step is its own assistant message (text and tool calls hang off it).
+          yield* closeText();
+          messageId = randomUUID();
+          break;
+
         case 'tool-input-start':
-          if (!isFrontendTool(part.toolName)) break;
+          if (!isKnownTool(part.toolName)) break;
           yield* closeText();
           openCalls.add(part.id);
-          // Shown in the panel as "Proposing…" while the arguments are generated.
+          // Shown in the panel ("Proposing…", "Checking…") while the arguments are generated.
           yield {
             type: EventType.TOOL_CALL_START,
             toolCallId: part.id,
@@ -100,7 +131,7 @@ export async function* runAgent({
           break;
 
         case 'tool-call': {
-          if (!isFrontendTool(part.toolName)) break;
+          if (!isKnownTool(part.toolName)) break;
           if (!openCalls.has(part.toolCallId)) {
             yield* closeText();
             yield {
@@ -119,9 +150,33 @@ export async function* runAgent({
             delta: JSON.stringify(part.input ?? {}),
           } as BaseEvent;
           yield { type: EventType.TOOL_CALL_END, toolCallId: part.toolCallId } as BaseEvent;
-          pending.push(part.toolCallId);
+          // Only frontend tools wait for the browser; server tools answer themselves.
+          if (isFrontendTool(part.toolName)) pending.push(part.toolCallId);
           break;
         }
+
+        case 'tool-result':
+          if (!isServerTool(part.toolName)) break;
+          yield {
+            type: EventType.TOOL_CALL_RESULT,
+            messageId: randomUUID(),
+            toolCallId: part.toolCallId,
+            role: 'tool',
+            content: JSON.stringify(part.output),
+          } as BaseEvent;
+          break;
+
+        case 'tool-error':
+          if (!isServerTool(part.toolName)) break;
+          onError?.(part.error);
+          yield {
+            type: EventType.TOOL_CALL_RESULT,
+            messageId: randomUUID(),
+            toolCallId: part.toolCallId,
+            role: 'tool',
+            content: JSON.stringify({ error: 'The check could not run.' }),
+          } as BaseEvent;
+          break;
 
         case 'finish-step':
           yield* closeText();

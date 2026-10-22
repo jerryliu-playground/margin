@@ -60,6 +60,23 @@ describe('toModelMessages', () => {
     expect(out[3]).toEqual({ role: 'user', content: 'Never mind.' });
   });
 
+  it('keeps server check results from history and adds no synthetic answer', () => {
+    const out = toModelMessages([
+      { id: 'u1', role: 'user', content: 'Check accessibility' },
+      {
+        id: 'a1',
+        role: 'assistant',
+        toolCalls: [
+          { id: 's1', type: 'function', function: { name: 'a11yCheck', arguments: '{}' } },
+        ],
+      },
+      { id: 't1', role: 'tool', toolCallId: 's1', content: '{"summary":"x","issues":[]}' },
+      { id: 'a2', role: 'assistant', content: 'No issues.' },
+    ]);
+    expect(out.map((m) => m.role)).toEqual(['user', 'assistant', 'tool', 'assistant']);
+    expect(JSON.stringify(out)).not.toContain('did not answer');
+  });
+
   it('drops a tool result for a call that does not exist', () => {
     const out = toModelMessages([
       { id: 'u1', role: 'user', content: 'Hi' },

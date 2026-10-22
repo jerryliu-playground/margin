@@ -145,6 +145,35 @@ describe('agent session', () => {
     expect(agent.inputs[1]?.messages.at(-1)?.content).toContain('Invalid proposal: Unknown field');
   });
 
+  it('leaves server check calls alone: no card and no answer from the browser', async () => {
+    const agent = new FakeAgent([
+      (i) => [
+        started(i),
+        ...toolCall('s1', 'a11yCheck', {}),
+        {
+          type: 'TOOL_CALL_RESULT',
+          messageId: 'r1',
+          toolCallId: 's1',
+          role: 'tool',
+          content: '{"summary":"No accessibility issues found.","issues":[]}',
+        } as never,
+        ...text('m2', 'All good.'),
+        finished(i),
+      ],
+    ]);
+    const session = createAgentSession({
+      host: fakeHost(),
+      agentUrl: 'http://x',
+      createAgent: () => agent,
+    });
+    await session.send('Check accessibility');
+    expect(session.getSnapshot().proposals).toEqual([]);
+    expect(agent.inputs).toHaveLength(1);
+    const tools = session.getSnapshot().messages.filter((m) => m.role === 'tool');
+    expect(tools).toHaveLength(1);
+    expect(tools[0]).toMatchObject({ toolCallId: 's1' });
+  });
+
   it('shows a run error', async () => {
     const agent = new FakeAgent([
       (i) => [

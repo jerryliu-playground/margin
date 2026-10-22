@@ -1,5 +1,10 @@
 import { HttpAgent, type AbstractAgent, type AgentSubscriber, type Message } from '@ag-ui/client';
-import { frontendToolDefinitions, type AgentState, type EditorHost } from '@margin/shared';
+import {
+  frontendToolDefinitions,
+  serverTools,
+  type AgentState,
+  type EditorHost,
+} from '@margin/shared';
 import { isStale, parseProposal, resultFor, type Proposal } from './proposals';
 
 /** What the panel shows about the current run. */
@@ -66,6 +71,8 @@ export function createAgentSession({ host, agentUrl, createAgent }: AgentSession
     },
     onToolCallStartEvent: () => update({ activity: 'proposing' }),
     onToolCallEndEvent: ({ event, toolCallName, toolCallArgs }) => {
+      // Server tools (checks) are answered by the server in the same run.
+      if (toolCallName in serverTools) return;
       const call = { toolCallId: event.toolCallId, toolName: toolCallName, args: toolCallArgs };
       batch.push(call.toolCallId);
       const parsed = parseProposal(call, host);
