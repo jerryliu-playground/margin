@@ -30,6 +30,10 @@ Never set `MARGIN_MODEL=anthropic` or an API key in a test (CLAUDE.md rule 5). I
 8. **Isolation:** each test creates the document it needs (`createDocument` in `e2e/helpers.ts`); don't depend on another test's data. The seeded article is read-only for tests.
 9. **Scope every lookup.** The editor form and the agent panel share roles and labels (two `status` regions; a proposal card is named after the field it changes). Use `field(page, 'Title')` for form fields, `panel(page)` for the panel, and `page.getByRole('main')` for anything else in the editor. Unscoped `page.getByLabel(...)` / `page.getByRole('status')` will hit strict-mode errors.
 
+## When a test finds a problem
+
+Fix it in its own commit (with a unit test if it is logic), then commit the e2e test. Do not fold product changes, config or other docs into the test commit (CLAUDE.md rule 8 is per commit).
+
 ## Driving the agent
 
 The mock model (`apps/server/src/agent/mock-model.ts`) answers by keyword in the last user message:

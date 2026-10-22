@@ -11,6 +11,8 @@ Every time the agent makes the same kind of mistake twice, or the owner corrects
 
 - 2026-10-22 — **Rule 8 was ambiguous.** The first AI review of PR #1 read "one concern per change" as one concern per pull request and asked to split the Phase 2 PR, whose commits each held one concern. Owner's decision: rule 8 is per commit; a PR may group single-concern commits from one approved plan. Guide: CLAUDE.md rule 8 reworded. Sensor: the review prompt judges rule 8 per commit.
 
+- 2026-10-22 — **Fixes found while testing went into the test commit.** The AI review flagged P2.7 (`547da59`): besides the axe and keyboard tests it carried an e2e rate-limit change, the panel's "N proposals to review." status (user-facing), the DOM lib in the root tsconfig and a skill edit. Owner's decision: keep the pushed history, record the lesson. Guide: when a test step uncovers a fix, commit the fix on its own first (with its test), then the test step; the `write-e2e-test` skill says so.
+
 ## Phase 0 baseline
 
 Guides and sensors in place at the start (2026-10-21):
