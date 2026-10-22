@@ -35,7 +35,8 @@ EditorHost.applyFieldValue / applyBodyEdit   (Accept only)
 append { role: "tool", toolCallId, content } and runAgent again ──► agent continues
 ```
 
-- **Shared state:** the panel sends `EditorHost.getState()` as `RunAgentInput.state` on every run. The server never writes state back in the MVP.
+- **Shared state:** the panel sends `{ schema: EditorHost.getSchema(), document: EditorHost.getState() }` (`AgentState`) as `RunAgentInput.state` on every run. The server never writes state back in the MVP.
+- **Request contract:** `agentRunRequestSchema` in `packages/shared/src/agent.ts` is the subset of AG-UI `RunAgentInput` we accept. Clients cannot send `system` or `developer` messages; the server owns the system prompt.
 - **Frontend tools:** `proposeFieldValue`, `proposeBodyEdit`. Defined in `packages/shared`, sent as `RunAgentInput.tools`, never executed on the server.
 - **Server tools (Phase 2):** `a11yCheck`, `seoCheck`. Executed on the server, results stream as tool-call events.
 - **Interrupt:** a run ends at an unanswered frontend tool call. The next run starts when the user answers.
