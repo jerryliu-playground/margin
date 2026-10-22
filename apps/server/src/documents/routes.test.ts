@@ -1,7 +1,7 @@
 import { EMPTY_BODY, type Document } from '@margin/shared';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { bearer, testApp } from '../test-helpers';
+import { bearer, testApp } from '../testing/test-app';
 import { SEED_DOCUMENT_ID } from './seed';
 
 let app: FastifyInstance;

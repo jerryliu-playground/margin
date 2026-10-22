@@ -1,6 +1,6 @@
 import { hashBlockText } from '@margin/shared';
 import { describe, expect, it } from 'vitest';
-import { fakeHost } from './fake-agent';
+import { fakeHost } from './testing/fake-agent';
 import { isStale, parseProposal, resultFor, type Proposal } from './proposals';
 
 const call = (toolName: string, args: Record<string, unknown>) => ({

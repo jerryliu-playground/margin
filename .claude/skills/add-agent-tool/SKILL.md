@@ -28,7 +28,7 @@ Read `docs/architecture.md` (agent round trip) and ADR 0003 first. Decide the ki
    - The answer goes back as a tool message using `proposalResultSchema`.
 5. **Tests.**
    - Server: `runAgent` with a scripted model (`run.test.ts` pattern; every event is checked against the AG-UI `EventSchema`), and add a keyword to the mock script in `mock-model.ts` for e2e. Never call the real model.
-   - Panel: drive the session with `FakeAgent` / `fakeHost` (`agent-session.test.ts` pattern).
+   - Panel: drive the session with `FakeAgent` / `fakeHost` from `packages/agent-panel/src/testing/fake-agent.ts` (`agent-session.test.ts` pattern). Server tests use `testApp` / `testRequest` from `apps/server/src/testing/`.
    - E2E: follow the `write-e2e-test` skill. One test for Accept (value applied), one for Reject (nothing changed). Include an axe check on the card.
 6. **Docs.** Add the tool to `docs/architecture.md` (tool list) and, if it introduces a new term, to `docs/domain.md`.
 7. Run `pnpm check`.

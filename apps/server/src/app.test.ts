@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { loadConfig } from './config';
-import { testApp } from './test-helpers';
+import { testApp } from './testing/test-app';
 
 describe('server', () => {
   it('answers /health', async () => {

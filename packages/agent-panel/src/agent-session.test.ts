@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createAgentSession } from './agent-session';
-import { FakeAgent, fakeHost, finished, started, text, toolCall } from './fake-agent';
+import { FakeAgent, fakeHost, finished, started, text, toolCall } from './testing/fake-agent';
 
 describe('agent session', () => {
   it('sends the document as shared state and the frontend tools', async () => {
