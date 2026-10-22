@@ -13,6 +13,8 @@ Every time the agent makes the same kind of mistake twice, or the owner corrects
 
 - 2026-10-22 — **Fixes found while testing went into the test commit.** The AI review flagged P2.7 (`547da59`): besides the axe and keyboard tests it carried an e2e rate-limit change, the panel's "N proposals to review." status (user-facing), the DOM lib in the root tsconfig and a skill edit. Owner's decision: keep the pushed history, record the lesson. Guide: when a test step uncovers a fix, commit the fix on its own first (with its test), then the test step; the `write-e2e-test` skill says so.
 
+- 2026-10-22 — **Undo was invisible to the agent.** Found by the owner on the live demo: after accepting an image's alt text and then undoing it, a re-check reported the missing alt again; the agent's history said "accepted", the document disagreed, and the agent apologised and guessed at reasons. The Phase 2 design had decided undo "sends nothing to the agent". Fix: undos travel once as AG-UI `context`; the prompt says the document is the truth. Guide: the `add-agent-tool` skill now says that any user action that makes an earlier tool result untrue must reach the agent. Sensor: e2e "after an undo, the agent is told".
+
 ## Phase 0 baseline
 
 Guides and sensors in place at the start (2026-10-21):

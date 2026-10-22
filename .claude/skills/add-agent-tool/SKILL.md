@@ -33,6 +33,10 @@ Read `docs/architecture.md` (agent round trip) and ADR 0003 first. Decide the ki
 6. **Docs.** Add the tool to `docs/architecture.md` (tool list) and, if it introduces a new term, to `docs/domain.md`.
 7. Run `pnpm check`.
 
+## Keep the agent's picture true
+
+If a user action can make an earlier tool result untrue (Undo after "accepted", an edit that makes a proposal stale), the agent must hear about it: send it as AG-UI `context` on the next run, like undos in `agent-session.ts`. Otherwise the history and the document disagree, and the model starts guessing.
+
 ## Don'ts
 
 - No tool may write to storage or the editor without a user Accept.
