@@ -7,12 +7,14 @@ interface ProposalCardProps {
   outdated: boolean;
   onAccept: () => void;
   onReject: (reason: string) => void;
+  onUndo: () => void;
 }
 
 const STATUS_TEXT: Record<Exclude<ProposalStatus, 'pending'>, string> = {
   accepted: 'Accepted. Save the document to keep it.',
   rejected: 'Rejected.',
   stale: 'Not applied: the block changed.',
+  undone: 'Undone. The previous version is back.',
 };
 
 function titleOf(p: Proposal): string {
@@ -43,8 +45,14 @@ function Diff({ before, after }: { before: string; after: string }) {
   );
 }
 
-/** One proposal: old vs new, the agent's reason, and Accept / Reject. */
-export function ProposalCard({ proposal, outdated, onAccept, onReject }: ProposalCardProps) {
+/** One proposal: old vs new, the agent's reason, Accept / Reject, and Undo once accepted. */
+export function ProposalCard({
+  proposal,
+  outdated,
+  onAccept,
+  onReject,
+  onUndo,
+}: ProposalCardProps) {
   const titleId = useId();
   const reasonId = useId();
   const [reason, setReason] = useState('');
@@ -105,11 +113,30 @@ export function ProposalCard({ proposal, outdated, onAccept, onReject }: Proposa
           </div>
         </div>
       ) : (
-        <p className="margin-proposal__status">
-          {proposal.status === 'rejected' && proposal.rejectReason?.startsWith('Could not apply')
-            ? proposal.rejectReason
-            : STATUS_TEXT[proposal.status as Exclude<ProposalStatus, 'pending'>]}
-        </p>
+        <>
+          <p className="margin-proposal__status">
+            {proposal.status === 'rejected' && proposal.rejectReason?.startsWith('Could not apply')
+              ? proposal.rejectReason
+              : STATUS_TEXT[proposal.status as Exclude<ProposalStatus, 'pending'>]}
+          </p>
+          {proposal.undoError && (
+            <p className="margin-proposal__warning" role="alert">
+              {proposal.undoError}
+            </p>
+          )}
+          {proposal.status === 'accepted' && !proposal.undoError && (
+            <div className="margin-proposal__buttons">
+              <button
+                type="button"
+                className="margin-panel__button"
+                data-action="undo"
+                onClick={onUndo}
+              >
+                Undo<span className="margin-sr"> {title}</span>
+              </button>
+            </div>
+          )}
+        </>
       )}
     </article>
   );

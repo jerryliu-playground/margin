@@ -116,6 +116,7 @@ export function AgentPanel({ host, agentUrl }: AgentPanelProps) {
               outdated={snapshot.outdated.has(p.toolCallId)}
               onAccept={() => answer(p.toolCallId, (s) => s.accept(p.toolCallId))}
               onReject={(reason) => answer(p.toolCallId, (s) => s.reject(p.toolCallId, reason))}
+              onUndo={() => answer(p.toolCallId, (s) => s.undo(p.toolCallId))}
             />
           ))}
         </section>

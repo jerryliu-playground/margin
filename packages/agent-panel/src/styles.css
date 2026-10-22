@@ -109,7 +109,8 @@
   border-color: #1a7f37;
 }
 .margin-proposal--rejected,
-.margin-proposal--stale {
+.margin-proposal--stale,
+.margin-proposal--undone {
   color: #57606a;
 }
 .margin-proposal__title {

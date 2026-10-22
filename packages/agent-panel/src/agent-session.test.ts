@@ -177,6 +177,78 @@ describe('agent session', () => {
     expect(tools[0]).toMatchObject({ toolCallId: 's1' });
   });
 
+  describe('undo', () => {
+    const fieldTurn = () =>
+      new FakeAgent([
+        (i) => [
+          started(i),
+          ...toolCall('c1', 'proposeFieldValue', { field: 'title', value: 'Hi', reason: 'r' }),
+          finished(i, ['c1']),
+        ],
+        (i) => [started(i), finished(i)],
+      ]);
+    const bodyTurn = () =>
+      new FakeAgent([
+        (i) => [
+          started(i),
+          ...toolCall('c1', 'proposeBodyEdit', {
+            blockId: 'p1',
+            newContent: { type: 'paragraph', text: 'Short.' },
+            reason: 'r',
+          }),
+          finished(i, ['c1']),
+        ],
+        (i) => [started(i), finished(i)],
+      ]);
+
+    it('restores a field to its value before the proposal', async () => {
+      const host = fakeHost();
+      const session = createAgentSession({ host, agentUrl: 'http://x', createAgent: fieldTurn });
+      await session.send('Title');
+      await session.accept('c1');
+      expect(host.fields.title).toBe('Hi');
+      await session.undo('c1');
+      expect(host.fields.title).toBe('Hello');
+      expect(session.getSnapshot().proposals[0]?.status).toBe('undone');
+    });
+
+    it('restores a block', async () => {
+      const host = fakeHost();
+      const session = createAgentSession({ host, agentUrl: 'http://x', createAgent: bodyTurn });
+      await session.send('Tighten');
+      await session.accept('c1');
+      expect(host.blocks[0]?.text).toBe('Short.');
+      await session.undo('c1');
+      expect(host.blocks[0]).toEqual({
+        blockId: 'p1',
+        type: 'paragraph',
+        text: 'One long sentence here.',
+      });
+    });
+
+    it('refuses when the value changed after Accept, and changes nothing', async () => {
+      const host = fakeHost();
+      const session = createAgentSession({ host, agentUrl: 'http://x', createAgent: bodyTurn });
+      await session.send('Tighten');
+      await session.accept('c1');
+      host.editBlock('p1', 'Short. And more typing.');
+      await session.undo('c1');
+      expect(host.blocks[0]?.text).toBe('Short. And more typing.');
+      expect(session.getSnapshot().proposals[0]).toMatchObject({
+        status: 'accepted',
+        undoError: expect.stringContaining('can no longer be undone'),
+      });
+    });
+
+    it('ignores undo on a proposal that was not accepted', async () => {
+      const host = fakeHost();
+      const session = createAgentSession({ host, agentUrl: 'http://x', createAgent: fieldTurn });
+      await session.send('Title');
+      await session.undo('c1');
+      expect(session.getSnapshot().proposals[0]?.status).toBe('pending');
+    });
+  });
+
   it('shows a run error', async () => {
     const agent = new FakeAgent([
       (i) => [
