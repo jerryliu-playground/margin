@@ -12,4 +12,5 @@ Every time the agent makes the same kind of mistake twice, or the owner corrects
 Guides and sensors in place at the start (2026-10-21):
 
 - Guides: `CLAUDE.md`, `SPEC.md`, `docs/architecture.md`, `docs/domain.md`, `docs/adr/`, skills `add-agent-tool` and `write-e2e-test`.
+- Added in Phase 2: skill `add-document-field` (2026-10-22).
 - Sensors: `tsc --noEmit` (strict), ESLint boundary rules with fix-it messages, Prettier check, Vitest, Playwright smoke + axe, CI on every push and PR.
