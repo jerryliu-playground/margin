@@ -115,6 +115,8 @@ describe('runAgent', () => {
     };
     await collect(ask('Hello'), spy);
     expect(prompt).toContain('Never invent facts');
+    expect(prompt).toContain('never guess it from a file name or URL');
+    expect(prompt).toContain('The document state below is the truth.');
     expect(prompt).toContain('"blockId\\":\\"p2');
   });
 
