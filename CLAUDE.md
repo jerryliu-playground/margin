@@ -43,7 +43,7 @@ Keep this list accurate; update it when scripts change.
 5. **Deterministic tests.** E2E tests use a mocked model. No test may call the real model API.
 6. **Accessibility is not optional.** Interactive elements are reachable by keyboard, have accessible names, and manage focus after actions (e.g. after Accept/Reject, focus moves to a sensible place). axe checks must pass.
 7. **Host-agnostic panel.** `packages/agent-panel` must never import TipTap, Strapi or WordPress code. It only talks to the editor through the `EditorHost` interface defined in SPEC.md. Host-specific code lives in `apps/web` or `plugins/*`.
-8. **Small, reviewable changes.** One concern per change. Don't refactor unrelated code in the same task.
+8. **Small, reviewable changes.** One concern per **commit**; each commit passes `pnpm check` on its own. A pull request may group several such commits that belong to one approved plan (e.g. a phase in `docs/plans/`). Don't refactor unrelated code in the same task.
 
 ## How changes land
 

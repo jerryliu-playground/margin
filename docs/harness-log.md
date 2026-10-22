@@ -7,6 +7,10 @@ Every time the agent makes the same kind of mistake twice, or the owner corrects
 | 2026-10-22 | E2E locators matched both the editor form and the agent panel (`getByRole('status')`, then `getByLabel('Meta description')` matched a proposal card titled the same).        | Guide: e2e helpers `field()` and `panel()` scope every lookup; rule added to the `write-e2e-test` skill.                                                                                                                                                           | `e2e/helpers.ts`, `.claude/skills/write-e2e-test/SKILL.md` |
 | 2026-10-22 | Scripted edits to Markdown tables and TS signatures missed their target after Prettier had reflowed the text (seen 3 times; the third silently dropped a mock-model branch). | Guide: edit first, format once at the end; match on short unique substrings, never on padded table rows. Every scripted replace asserts that it matched, so a miss fails loudly. Sensor: `run.test.ts` now runs the AG-UI client's `verifyEvents` on every stream. | this log (agent working note)                              |
 
+## Clarifications
+
+- 2026-10-22 — **Rule 8 was ambiguous.** The first AI review of PR #1 read "one concern per change" as one concern per pull request and asked to split the Phase 2 PR, whose commits each held one concern. Owner's decision: rule 8 is per commit; a PR may group single-concern commits from one approved plan. Guide: CLAUDE.md rule 8 reworded. Sensor: the review prompt judges rule 8 per commit.
+
 ## Phase 0 baseline
 
 Guides and sensors in place at the start (2026-10-21):
