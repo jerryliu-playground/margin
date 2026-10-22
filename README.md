@@ -80,7 +80,7 @@ pnpm check      # typecheck, lint, format check, unit tests, e2e
 
 The server reads `apps/server/.env` in dev (see [`.env.example`](.env.example)). Without `MARGIN_MODEL=anthropic` and an `ANTHROPIC_API_KEY` it uses the scripted mock model, so everything works offline.
 
-Deploying: [`docs/deploy.md`](docs/deploy.md) (Fly.io, one always-on machine, about $4/month).
+Deploying: [`docs/deploy.md`](docs/deploy.md) (Fly.io, one always-on machine, about $4/month). Demo video script: [`docs/demo-script.md`](docs/demo-script.md).
 
 ## Stack
 

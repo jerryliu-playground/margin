@@ -32,7 +32,7 @@ After PR A is merged:
 PR B:
 
 - [x] **P3.9 README** — what it is, architecture, how AG-UI is used, the harness (guides, sensors, steering loop with harness-log evidence), running locally, ADR index, live link.
-- [ ] **P3.10 Demo script** — 2–3 minute shot list and narration for the owner to record. `docs/demo-script.md`.
+- [x] **P3.10 Demo script** — 2–3 minute shot list and narration for the owner to record. `docs/demo-script.md`.
 
 ## Owner-only actions
 
