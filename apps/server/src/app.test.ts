@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { buildApp } from './app';
 import { loadConfig } from './config';
+import { testApp } from './test-helpers';
 
 describe('server', () => {
   it('answers /health', async () => {
-    const app = await buildApp(loadConfig({ NODE_ENV: 'test' }));
+    const app = await testApp();
     const res = await app.inject({ method: 'GET', url: '/health' });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ status: 'ok' });
@@ -12,9 +12,7 @@ describe('server', () => {
   });
 
   it('allows CORS only from the web origin', async () => {
-    const app = await buildApp(
-      loadConfig({ NODE_ENV: 'test', WEB_ORIGIN: 'http://localhost:5173' }),
-    );
+    const app = await testApp({ WEB_ORIGIN: 'http://localhost:5173' });
     const ok = await app.inject({
       method: 'GET',
       url: '/health',
@@ -30,7 +28,20 @@ describe('server', () => {
     await app.close();
   });
 
+  it('rate-limits with a 429 in the API error shape', async () => {
+    const app = await testApp({ RATE_LIMIT_PER_MINUTE: '2' });
+    for (let i = 0; i < 2; i++) await app.inject({ method: 'GET', url: '/health' });
+    const res = await app.inject({ method: 'GET', url: '/health' });
+    expect(res.statusCode).toBe(429);
+    expect(res.json()).toMatchObject({ error: { code: 'rate_limited' } });
+    await app.close();
+  });
+
   it('refuses the anthropic model without a key', () => {
     expect(() => loadConfig({ MARGIN_MODEL: 'anthropic' })).toThrow(/ANTHROPIC_API_KEY/);
+  });
+
+  it('refuses production without a token secret', () => {
+    expect(() => loadConfig({ NODE_ENV: 'production' })).toThrow(/MARGIN_TOKEN_SECRET/);
   });
 });

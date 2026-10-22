@@ -15,7 +15,13 @@ export default defineConfig({
       // CLAUDE.md rule 5: e2e always runs the server with the mock model.
       command: 'pnpm --filter @margin/server start',
       url: `${SERVER_URL}/health`,
-      env: { MARGIN_MODEL: 'mock', NODE_ENV: 'test', WEB_ORIGIN: WEB_URL, PORT: '8787' },
+      env: {
+        MARGIN_MODEL: 'mock',
+        NODE_ENV: 'test',
+        MARGIN_DB_PATH: ':memory:',
+        WEB_ORIGIN: WEB_URL,
+        PORT: '8787',
+      },
       reuseExistingServer: !process.env.CI,
     },
     {

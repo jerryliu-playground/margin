@@ -29,6 +29,7 @@ pnpm lint         # ESLint (includes boundary rules)
 pnpm format       # Prettier write (pnpm format:check to verify)
 pnpm test         # unit tests (Vitest)
 pnpm e2e          # Playwright (builds web, starts web + server with a mocked model)
+pnpm --filter @margin/server db:generate   # new SQL migration after editing apps/server/src/db/schema.ts
 ```
 
 Keep this list accurate; update it when scripts change.
