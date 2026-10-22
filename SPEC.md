@@ -203,4 +203,4 @@ Phases 4–5 must not start until Phase 3 is shipped. Only the `EditorHost` boun
 
 - ~~CopilotKit components vs. raw AG-UI client~~ → raw client (ADR 0002).
 - ~~Which agent framework~~ → AI SDK + own AG-UI adapter (ADR 0003).
-- Hosting for the demo (a host that supports a long-lived Node server and SQLite, or switch storage).
+- ~~Hosting~~ → Fly.io, one always-on machine with a volume (ADR 0009). Was: Hosting for the demo (a host that supports a long-lived Node server and SQLite, or switch storage).

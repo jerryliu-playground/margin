@@ -12,6 +12,7 @@ One short record per real decision. Never edit an accepted ADR's decision; super
 | [0006](0006-host-neutral-editor-host.md) | Host-neutral `EditorHost` and document model              | Accepted |
 | [0007](0007-toolchain-versions.md)       | Toolchain and pinned versions                             | Accepted |
 | [0008](0008-ai-review-on-prs.md)         | AI review on pull requests                                | Accepted |
+| [0009](0009-hosting-fly.md)              | Hosting the demo on Fly.io                                | Accepted |
 
 ## Template
 
