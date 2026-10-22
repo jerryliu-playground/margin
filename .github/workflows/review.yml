@@ -1,0 +1,72 @@
+name: AI review
+
+# Reviews every pull request against CLAUDE.md (SPEC §8, ADR 0008).
+# Needs the ANTHROPIC_API_KEY repository secret; without it (or on fork PRs,
+# which get no secrets) the review is skipped instead of failing.
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review, reopened]
+
+concurrency:
+  group: ai-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # id-token lets the action exchange an OIDC token for a short-lived Claude GitHub App token.
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    env:
+      HAS_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+    steps:
+      - name: Skip without an API key
+        if: env.HAS_KEY != 'true'
+        run: echo "ANTHROPIC_API_KEY is not set for this run; skipping the AI review."
+
+      - uses: actions/checkout@v4
+        if: env.HAS_KEY == 'true'
+        with:
+          fetch-depth: 1
+
+      - name: Review against CLAUDE.md
+        if: env.HAS_KEY == 'true'
+        # Pinned to a commit: v1.0.257
+        uses: anthropics/claude-code-action@e63e2e7e49b6ce70236ecc4d936eff71047586e4
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            You review pull requests for Margin. Read CLAUDE.md first; it is the standard.
+            Read SPEC.md and docs/architecture.md, and the ADRs in docs/adr/ that the change touches.
+
+            Check the diff (`gh pr diff`) against:
+            1. The eight hard rules in CLAUDE.md (approval first, schemas in packages/shared and
+               validated on both ends, secrets only on the server, package boundaries, deterministic
+               tests with the mocked model, accessibility, host-agnostic panel, one concern per commit).
+               Rule 8 is judged per commit (list them with `gh pr view --json commits`, see one with
+               `gh api repos/${{ github.repository }}/commits/<sha>`), not per pull request: a PR
+               that groups single-concern commits from one approved plan in docs/plans/ is fine.
+               Flag a commit that mixes concerns, not a PR that contains several commits.
+            2. The definition of done: new behaviour has tests; new agent tools follow the
+               add-agent-tool skill; docs and ADRs are updated when structure or decisions change;
+               new dependencies are recorded in docs/adr/0007; no unexplained lint suppressions.
+            3. Correctness bugs you can point to in the changed lines.
+
+            Do not comment on formatting or anything ESLint, Prettier or tsc already enforce.
+            Do not approve or request changes; only comment.
+
+            For each real problem, leave one inline comment on the line: what is wrong, which rule
+            it breaks, and what to do instead. Then post one short summary comment with
+            `gh pr comment`: the number of problems by rule, or "No problems found against CLAUDE.md."
+          claude_args: |
+            --model claude-sonnet-5-5
+            --max-turns 30
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh api repos/${{ github.repository }}/commits/:*),Read,Grep,Glob"

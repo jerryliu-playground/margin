@@ -38,7 +38,7 @@ append { role: "tool", toolCallId, content } and runAgent again ──► agent 
 - **Shared state:** the panel sends `{ schema: EditorHost.getSchema(), document: EditorHost.getState() }` (`AgentState`) as `RunAgentInput.state` on every run. The server never writes state back in the MVP.
 - **Request contract:** `agentRunRequestSchema` in `packages/shared/src/agent.ts` is the subset of AG-UI `RunAgentInput` we accept. Clients cannot send `system` or `developer` messages; the server owns the system prompt.
 - **Frontend tools:** `proposeFieldValue`, `proposeBodyEdit`. Defined in `packages/shared`, sent as `RunAgentInput.tools`, never executed on the server.
-- **Server tools (Phase 2):** `a11yCheck`, `seoCheck`. Executed on the server, results stream as tool-call events.
+- **Server tools:** `a11yCheck`, `seoCheck` (pure checks in `packages/shared/src/checks.ts`). Always available, executed on the server on this run's document state. The call streams as `TOOL_CALL_START/ARGS/END`, the result as `TOOL_CALL_RESULT`, and the model continues in the same run (each model step is its own assistant message). The panel never answers them.
 - **Interrupt:** a run ends at an unanswered frontend tool call. The next run starts when the user answers.
 
 ## Server agent (apps/server/src/agent)
@@ -57,6 +57,7 @@ append { role: "tool", toolCallId, content } and runAgent again ──► agent 
 | File                                  | Role                                                                                                |
 | ------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | `agent-session.ts`                    | AG-UI client session: runs, streaming, activity, proposal registry, Accept/Reject, auto-continue    |
+| `checks.ts`                           | Finds server check results (tool messages) in the conversation for the issue list                   |
 | `proposals.ts`                        | Tool call → proposal (validated against shared schemas and `getSchema()`), stale check, tool result |
 | `AgentPanel.tsx` / `ProposalCard.tsx` | UI; focus moves to the next pending card or the message box after an answer                         |
 | `fake-agent.ts`                       | Test doubles: scripted AG-UI agent and in-memory `EditorHost`                                       |
@@ -66,6 +67,7 @@ Approval rules the session enforces:
 - A turn's proposals are answered together: the next run starts when every tool call of the turn has an answer.
 - An invalid tool call is never shown; it is answered `rejected` with the validation error. More than two all-invalid turns in a row stop with an error.
 - A body proposal whose block changed (hash differs from `baseHash`) cannot be accepted; dismissing it answers `stale`.
+- Undo restores the value from before the proposal, only if the field value or the block's hash is unchanged since Accept (`canUndo` in `proposals.ts`). It sends nothing to the agent.
 
 ## Auth
 

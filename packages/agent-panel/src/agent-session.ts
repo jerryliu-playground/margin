@@ -1,9 +1,16 @@
 import { HttpAgent, type AbstractAgent, type AgentSubscriber, type Message } from '@ag-ui/client';
-import { frontendToolDefinitions, type AgentState, type EditorHost } from '@margin/shared';
-import { isStale, parseProposal, resultFor, type Proposal } from './proposals';
+import {
+  frontendToolDefinitions,
+  hashBlockText,
+  serverTools,
+  type AgentState,
+  type EditorHost,
+} from '@margin/shared';
+import { canUndo, isStale, parseProposal, resultFor, type Proposal } from './proposals';
 
 /** What the panel shows about the current run. */
-export type Activity = 'idle' | 'reading' | 'writing' | 'proposing';
+export type Activity =
+  'idle' | 'reading' | 'writing' | 'proposing' | 'checking-a11y' | 'checking-seo';
 
 /** A frontend tool call as the agent made it. */
 export interface ToolCallRequest {
@@ -64,8 +71,18 @@ export function createAgentSession({ host, agentUrl, createAgent }: AgentSession
     onTextMessageContentEvent: () => {
       if (snapshot.activity !== 'writing') update({ activity: 'writing' });
     },
-    onToolCallStartEvent: () => update({ activity: 'proposing' }),
+    onToolCallStartEvent: ({ event }) =>
+      update({
+        activity:
+          event.toolCallName === 'a11yCheck'
+            ? 'checking-a11y'
+            : event.toolCallName === 'seoCheck'
+              ? 'checking-seo'
+              : 'proposing',
+      }),
     onToolCallEndEvent: ({ event, toolCallName, toolCallArgs }) => {
+      // Server tools (checks) are answered by the server in the same run.
+      if (toolCallName in serverTools) return;
       const call = { toolCallId: event.toolCallId, toolName: toolCallName, args: toolCallArgs };
       batch.push(call.toolCallId);
       const parsed = parseProposal(call, host);
@@ -190,9 +207,20 @@ export function createAgentSession({ host, agentUrl, createAgent }: AgentSession
         resolve(toolCallId, { status: 'stale' });
       } else {
         try {
-          if (proposal.kind === 'field') await host.applyFieldValue(proposal.field, proposal.after);
-          else await host.applyBodyEdit(proposal.blockId, proposal.after);
-          resolve(toolCallId, { status: 'accepted' });
+          if (proposal.kind === 'field') {
+            await host.applyFieldValue(proposal.field, proposal.after);
+            resolve(toolCallId, {
+              status: 'accepted',
+              applied: host.getState().fields[proposal.field],
+            });
+          } else {
+            await host.applyBodyEdit(proposal.blockId, proposal.after);
+            const block = host.getState().body.find((b) => b.blockId === proposal.blockId);
+            resolve(toolCallId, {
+              status: 'accepted',
+              appliedHash: block ? hashBlockText(block.text) : undefined,
+            });
+          }
         } catch (error) {
           resolve(toolCallId, {
             status: 'rejected',
@@ -209,6 +237,39 @@ export function createAgentSession({ host, agentUrl, createAgent }: AgentSession
       if (snapshot.outdated.has(toolCallId)) resolve(toolCallId, { status: 'stale' });
       else resolve(toolCallId, { status: 'rejected', rejectReason: reason?.trim() || undefined });
       await continueIfAnswered();
+    },
+    /**
+     * Restores what an accepted proposal replaced, if nothing changed it since (SPEC feature 9).
+     * Local to the editor: the agent sees the restored value in the next run's state.
+     */
+    async undo(toolCallId: string): Promise<void> {
+      const proposal = snapshot.proposals.find(
+        (p) => p.toolCallId === toolCallId && p.status === 'accepted',
+      );
+      if (!proposal) return;
+      const patch = (p: Partial<Proposal>) =>
+        update({
+          proposals: snapshot.proposals.map((x) =>
+            x.toolCallId === toolCallId ? ({ ...x, ...p } as Proposal) : x,
+          ),
+        });
+      if (!canUndo(proposal, host.getState())) {
+        patch({ undoError: 'It changed after you accepted it, so it can no longer be undone.' });
+        return;
+      }
+      try {
+        if (proposal.kind === 'field') await host.applyFieldValue(proposal.field, proposal.before);
+        else {
+          await host.applyBodyEdit(proposal.blockId, {
+            type: proposal.blockType,
+            text: proposal.before,
+            ...(proposal.beforeAttrs ? { attrs: proposal.beforeAttrs } : {}),
+          });
+        }
+        patch({ status: 'undone', undoError: undefined });
+      } catch (error) {
+        patch({ undoError: `Could not undo: ${(error as Error).message}` });
+      }
     },
     stop: () => agent.abortRun(),
     dispose: () => unsubscribeHost(),

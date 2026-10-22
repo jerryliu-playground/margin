@@ -36,6 +36,13 @@
   border-radius: 6px;
   padding: 6px 8px;
 }
+.margin-panel__msg--check p {
+  font-weight: 600;
+}
+.margin-panel__issues {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
 .margin-panel__status {
   margin: 0;
   min-height: 1.5em;
@@ -102,7 +109,8 @@
   border-color: #1a7f37;
 }
 .margin-proposal--rejected,
-.margin-proposal--stale {
+.margin-proposal--stale,
+.margin-proposal--undone {
   color: #57606a;
 }
 .margin-proposal__title {

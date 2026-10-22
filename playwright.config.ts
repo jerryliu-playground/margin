@@ -24,6 +24,9 @@ export default defineConfig({
         MARGIN_DB_PATH: ':memory:',
         WEB_ORIGIN: WEB_URL,
         PORT: String(SERVER_PORT),
+        // The suite makes many agent runs per minute; rate limits have their own unit tests.
+        RATE_LIMIT_PER_MINUTE: '100000',
+        AGENT_RATE_LIMIT_PER_MINUTE: '100000',
       },
       reuseExistingServer: false,
     },

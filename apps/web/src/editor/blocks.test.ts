@@ -116,6 +116,54 @@ describe('replaceBlock', () => {
   });
 });
 
+describe('image blocks', () => {
+  const withImage: JSONContent = {
+    type: 'doc',
+    content: [
+      { type: 'paragraph', attrs: { id: 'p1' }, content: [{ type: 'text', text: 'Before.' }] },
+      { type: 'image', attrs: { id: 'img1', src: '/chart.svg', alt: null } },
+    ],
+  };
+
+  it('exposes an image as ![alt](src), with an empty alt when it has none', async () => {
+    await make(withImage);
+    expect(toBodyBlocks(editor)[1]).toEqual({
+      blockId: 'img1',
+      type: 'image',
+      text: '![](/chart.svg)',
+    });
+  });
+
+  it('adds alt text through a block replacement, keeping the id and src', async () => {
+    await make(withImage);
+    replaceBlock(editor, 'img1', {
+      type: 'image',
+      text: '![Bar chart of reading time](/chart.svg)',
+    });
+    expect(toBodyBlocks(editor)[1]).toEqual({
+      blockId: 'img1',
+      type: 'image',
+      text: '![Bar chart of reading time](/chart.svg)',
+    });
+    expect(editor.getHTML()).toContain('alt="Bar chart of reading time"');
+  });
+
+  it('refuses image content that is not ![alt](src)', async () => {
+    await make(withImage);
+    expect(() => replaceBlock(editor, 'img1', { type: 'image', text: 'A chart' })).toThrow(
+      /!\[alt text\]\(src\)/,
+    );
+  });
+
+  it('keeps the image and its id through a JSON save and load', async () => {
+    await make(withImage);
+    const saved = editor.getJSON();
+    editor.destroy();
+    await make(saved);
+    expect(toBodyBlocks(editor).map((b) => b.blockId)).toEqual(['p1', 'img1']);
+  });
+});
+
 describe('UniqueID', () => {
   it('keeps ids unique when the same block is pasted twice', async () => {
     // jsdom has no ClipboardEvent or layout; ProseMirror only needs these to exist.

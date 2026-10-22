@@ -1,0 +1,30 @@
+# 0008. AI review on pull requests
+
+- Status: Accepted
+- Date: 2026-10-22
+
+## Context
+
+SPEC §8 lists "an AI review step on pull requests (a reviewer prompt that checks against CLAUDE.md rules)" as a sensor. Lint, types and tests cannot check some rules: one concern per change, docs and ADRs kept up to date, tests that actually cover new behaviour, whether a change respects the approval-first design.
+
+## Decision
+
+- `.github/workflows/review.yml` runs `anthropics/claude-code-action`, pinned to the commit of `v1.0.257` (`e63e2e7e…`), on every non-draft pull request.
+- The prompt makes CLAUDE.md the standard: the eight hard rules, the definition of done, and correctness bugs in changed lines. It skips anything ESLint, Prettier or tsc already enforce, and it only comments (no approve / request changes).
+- Model `claude-sonnet-5-5`, at most 30 turns (15 was too few once rule 8 is judged per commit: a 10-commit PR took 19). Tools: read files, `gh pr diff/view/comment`, read-only `gh api repos/<repo>/commits/…` (to judge rule 8 per commit), inline comments.
+- It authenticates to GitHub through the Claude GitHub App, installed on this repository by the owner: the action exchanges the job's OIDC token (`id-token: write`) for a short-lived app token scoped to this repository. Comments appear as `claude[bot]`. (History, 2026-10-22: the first run failed with 401 because the app was not installed; the job briefly used its own `GITHUB_TOKEN` instead, then went back to the app once it was installed.)
+- The repository owner adds the `ANTHROPIC_API_KEY` secret. Without it (and on fork PRs, which get no secrets), the job logs a skip and passes.
+- From now on, changes land through branches and pull requests, so every change gets reviewed.
+
+## Consequences
+
+- Easy: the harness gets a sensor for rules that code checks cannot see; its comments are evidence for the harness log.
+- Cost: each review is billed to the owner's API key (an estimate of a few cents per PR with Sonnet 5.5; not measured yet).
+- Watch: review comments are model output, not rules. A comment that repeats should become a lint rule, test or skill (harness log).
+- Watch: with app authentication, a PR that changes `review.yml` itself is skipped until that version is on `main` (the action's own safety check). Workflow changes are verified after merge.
+- Watch: the action is pinned by commit; update it on purpose, like other dependencies (ADR 0007).
+
+## Alternatives considered
+
+- **No AI review until Phase 3:** cheaper, but the sensor is a Phase 0 harness item in SPEC §8.
+- **Review on every push to main:** no place for inline comments, and no chance to fix before the change lands.

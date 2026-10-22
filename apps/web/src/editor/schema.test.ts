@@ -3,7 +3,8 @@ import { Editor } from '@tiptap/core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createFieldStore } from './document-store';
 import { editorExtensions } from './extensions';
-import { DEMO_SCHEMA, SEO_LIMITS } from './schema';
+import { SEO_LIMITS } from '@margin/shared';
+import { DEMO_SCHEMA } from './schema';
 import { createTipTapHost } from './tiptap-host';
 
 let editor: Editor;
@@ -25,7 +26,7 @@ describe('DEMO_SCHEMA', () => {
     const max = Object.fromEntries(DEMO_SCHEMA.map((f) => [f.name, f.maxLength]));
     expect(max.title).toBe(60);
     expect(max.metaDescription).toBe(160);
-    expect(SEO_LIMITS).toEqual({ title: 60, metaDescription: 160 });
+    expect(SEO_LIMITS).toMatchObject({ title: 60, metaDescription: 160 });
   });
 
   it('accepts a meta description at the limit and refuses one over it', async () => {

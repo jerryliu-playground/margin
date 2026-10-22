@@ -4,9 +4,14 @@ import type { Editor, JSONContent } from '@tiptap/core';
 /**
  * Conversion between TipTap's document and the host-neutral body (ADR 0006).
  * Paragraphs and headings expose their inline content as Markdown, with the heading level in
- * `attrs`. Other blocks (lists, quotes, code) expose their whole Markdown, block syntax included.
+ * `attrs`. Images are `![alt](src)`, so the alt text is part of the hashed text (a changed alt
+ * makes a pending proposal stale). Other blocks (lists, quotes, code) expose their whole
+ * Markdown, block syntax included.
  */
 const INLINE_BLOCKS = new Set(['paragraph', 'heading']);
+
+const imageMarkdown = (alt: unknown, src: unknown) =>
+  `![${typeof alt === 'string' ? alt.replace(/[[\]]/g, '') : ''}](${typeof src === 'string' ? src : ''})`;
 
 function markdown(editor: Editor) {
   const manager = editor.markdown;
@@ -21,6 +26,16 @@ export function toBodyBlocks(editor: Editor): BodyBlock[] {
     const json = node.toJSON() as JSONContent;
     const { id, ...rest } = (json.attrs ?? {}) as Record<string, unknown>;
     if (typeof id !== 'string') return; // UniqueID assigns ids on every transaction.
+    if (node.type.name === 'image') {
+      const { src, alt, title } = rest;
+      blocks.push({
+        blockId: id,
+        type: 'image',
+        text: imageMarkdown(alt, src),
+        ...(typeof title === 'string' && title ? { attrs: { title } } : {}),
+      });
+      return;
+    }
     const inline = INLINE_BLOCKS.has(node.type.name);
     const text = inline
       ? md.serialize({ type: 'doc', content: [{ type: 'paragraph', content: json.content ?? [] }] })
@@ -45,6 +60,14 @@ export function fromBodyBlock(
   block: BodyBlockContent,
 ): JSONContent {
   if (!editor.schema.nodes[block.type]) throw new BlockError(`Unknown block type "${block.type}".`);
+  if (block.type === 'image') {
+    const match = /^!\[([^\]]*)\]\(([^)\s]+)\)$/.exec(block.text.trim());
+    if (!match) throw new BlockError('An image must be written as ![alt text](src).');
+    return {
+      type: 'image',
+      attrs: { ...block.attrs, id: blockId, alt: match[1] ?? '', src: match[2] ?? '' },
+    };
+  }
   const parsed = markdown(editor).parse(block.text).content ?? [];
   if (parsed.length > 1) throw new BlockError('The new content must be a single block.');
   const first = parsed[0];

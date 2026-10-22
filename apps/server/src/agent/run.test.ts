@@ -1,13 +1,19 @@
+import { verifyEvents } from '@ag-ui/client';
 import { EventType, type BaseEvent } from '@ag-ui/core';
 import { EventSchema } from '@ag-ui/core/schemas';
 import type { LanguageModelV4 } from '@ai-sdk/provider';
+import { checkResultSchema } from '@margin/shared';
+import { from, lastValueFrom, toArray } from 'rxjs';
 import { describe, expect, it } from 'vitest';
 import { createMockModel } from './mock-model';
 import { runAgent } from './run';
 import { testRequest } from './test-request';
 
-async function collect(messages: Parameters<typeof testRequest>[0], model?: LanguageModelV4) {
-  const request = testRequest(messages);
+async function collect(
+  messages: Parameters<typeof testRequest>[0],
+  model?: LanguageModelV4,
+  request = testRequest(messages),
+) {
   const events: BaseEvent[] = [];
   for await (const event of runAgent({
     request,
@@ -18,6 +24,8 @@ async function collect(messages: Parameters<typeof testRequest>[0], model?: Lang
     expect(EventSchema.safeParse(event).success, JSON.stringify(event)).toBe(true);
     events.push(event);
   }
+  // And the whole stream must pass the AG-UI client's own ordering rules.
+  await lastValueFrom(from(events).pipe(verifyEvents(false), toArray()));
   return events;
 }
 
@@ -122,6 +130,56 @@ describe('runAgent', () => {
     for await (const event of events) expect(event).toBeDefined();
     expect(usages).toHaveLength(1);
     expect(usages[0]).toHaveProperty('outputTokens');
+  });
+
+  it('runs a server check, streams its result, then proposes a fix in the same run', async () => {
+    const request = testRequest(ask('Check accessibility'));
+    request.state.document.body.push({ blockId: 'img1', type: 'image', text: '![](/chart.svg)' });
+    const events = await collect(request.messages, undefined, request);
+
+    const starts = events.filter((e) => e.type === EventType.TOOL_CALL_START) as (BaseEvent & {
+      toolCallId: string;
+      toolCallName: string;
+    })[];
+    expect(starts.map((s) => s.toolCallName)).toEqual(['a11yCheck', 'proposeBodyEdit']);
+
+    const result = events.find((e) => e.type === EventType.TOOL_CALL_RESULT) as BaseEvent & {
+      toolCallId: string;
+      content: string;
+    };
+    expect(result.toolCallId).toBe(starts[0]?.toolCallId);
+    const parsed = checkResultSchema.parse(JSON.parse(result.content));
+    expect(parsed.issues.map((i) => i.rule)).toEqual(['image-alt-missing']);
+
+    const text = events
+      .filter((e) => e.type === EventType.TEXT_MESSAGE_CONTENT)
+      .map((e) => (e as BaseEvent & { delta: string }).delta)
+      .join('');
+    expect(text).toContain('Accessibility check: Found 1 error.');
+    // Only the proposal waits for the browser; the check answered itself.
+    expect(events.at(-1)).toMatchObject({
+      outcome: { pendingToolCallIds: [starts[1]?.toolCallId] },
+    });
+  });
+
+  it('gives each model step its own assistant message', async () => {
+    const request = testRequest(ask('Check accessibility'));
+    request.state.document.body.push({ blockId: 'img1', type: 'image', text: '![](/chart.svg)' });
+    const events = await collect(request.messages, undefined, request);
+    const textIds = new Set(
+      events
+        .filter((e) => e.type === EventType.TEXT_MESSAGE_START)
+        .map((e) => (e as BaseEvent & { messageId: string }).messageId),
+    );
+    expect(textIds.size).toBe(2);
+  });
+
+  it('runs seoCheck and proposes the missing meta description', async () => {
+    const events = await collect(ask('Check SEO'));
+    const names = events
+      .filter((e) => e.type === EventType.TOOL_CALL_START)
+      .map((e) => (e as BaseEvent & { toolCallName: string }).toolCallName);
+    expect(names).toEqual(['seoCheck', 'proposeFieldValue']);
   });
 
   it('turns a model failure into RUN_ERROR without leaking details', async () => {

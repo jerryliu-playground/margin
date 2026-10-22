@@ -13,7 +13,7 @@ A rich-text content editor with an AI agent in a side panel. The agent talks to 
 - `apps/server`: Node + Fastify, AI SDK agent (`ai` + `@ai-sdk/anthropic`) behind our own AG-UI adapter, REST for documents, SQLite (better-sqlite3 + Drizzle)
 - `packages/agent-panel`: host-agnostic React panel on the raw `@ag-ui/client` SDK (no CopilotKit)
 - `packages/shared`: types, zod schemas, pure helpers
-- Decisions and pinned versions: `docs/adr/` (0001–0007)
+- Decisions and pinned versions: `docs/adr/` (0001–0008)
 - Tests: Vitest, Playwright, axe-core · Lint: ESLint + typescript-eslint · Format: Prettier
 
 If a library's API is uncertain, check its current documentation instead of guessing. Record any new dependency in an ADR.
@@ -43,7 +43,11 @@ Keep this list accurate; update it when scripts change.
 5. **Deterministic tests.** E2E tests use a mocked model. No test may call the real model API.
 6. **Accessibility is not optional.** Interactive elements are reachable by keyboard, have accessible names, and manage focus after actions (e.g. after Accept/Reject, focus moves to a sensible place). axe checks must pass.
 7. **Host-agnostic panel.** `packages/agent-panel` must never import TipTap, Strapi or WordPress code. It only talks to the editor through the `EditorHost` interface defined in SPEC.md. Host-specific code lives in `apps/web` or `plugins/*`.
-8. **Small, reviewable changes.** One concern per change. Don't refactor unrelated code in the same task.
+8. **Small, reviewable changes.** One concern per **commit**; each commit passes `pnpm check` on its own. A pull request may group several such commits that belong to one approved plan (e.g. a phase in `docs/plans/`). Don't refactor unrelated code in the same task.
+
+## How changes land
+
+On a branch, through a pull request. CI runs `pnpm check`, and the AI review (`.github/workflows/review.yml`, ADR 0008) comments against this file. Treat a repeated review comment like a repeated mistake: add a guide or sensor (see Harness upkeep).
 
 ## Definition of done
 

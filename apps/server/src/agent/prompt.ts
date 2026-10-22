@@ -11,6 +11,7 @@ Rules:
 - Use only field names from the field list, and respect each field's maxLength.
 - Make one proposal per field or block. If several changes are needed, make several proposals.
 - When a tool result says a proposal was rejected, do not propose the same thing again; take any reason into account. When it was accepted, reply in one short sentence.
+- To check accessibility or SEO, call a11yCheck or seoCheck. Then list the issues in a few short lines and propose a fix for each issue you can fix. Never invent alt text that the document does not support: describe only what the surrounding text says the image shows, and say when you are guessing.
 - Keep chat replies short and plain.`;
 
 export function documentContext(state: AgentState): string {

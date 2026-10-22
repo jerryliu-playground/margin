@@ -11,7 +11,7 @@ import {
 import { z } from 'zod';
 import type { ToolCallRequest } from './agent-session';
 
-export type ProposalStatus = 'pending' | 'accepted' | 'rejected' | 'stale';
+export type ProposalStatus = 'pending' | 'accepted' | 'rejected' | 'stale' | 'undone';
 
 interface ProposalBase {
   toolCallId: string;
@@ -19,12 +19,16 @@ interface ProposalBase {
   status: ProposalStatus;
   /** Why it was rejected (by the user, or because it could not be applied). */
   rejectReason?: string | undefined;
+  /** Set when Undo was refused because the value changed after it was accepted. */
+  undoError?: string | undefined;
 }
 export interface FieldProposal extends ProposalBase {
   kind: 'field';
   field: string;
   label: string;
   before: FieldValue;
+  /** The field's value right after Accept; Undo only runs while it is unchanged. */
+  applied?: FieldValue | undefined;
   after: FieldValue;
 }
 export interface BodyProposal extends ProposalBase {
@@ -35,6 +39,10 @@ export interface BodyProposal extends ProposalBase {
   after: BodyBlockContent;
   /** Hash of the block's text when proposed (ADR 0006). */
   baseHash: string;
+  /** The block's attrs before the edit, so Undo can restore them. */
+  beforeAttrs?: Record<string, unknown> | undefined;
+  /** Hash of the block's text right after Accept; Undo only runs while it is unchanged. */
+  appliedHash?: string | undefined;
 }
 export type Proposal = FieldProposal | BodyProposal;
 
@@ -91,6 +99,7 @@ export function parseProposal(call: ToolCallRequest, host: EditorHost): ParseRes
         before: block.text,
         after: newContent,
         baseHash: hashBlockText(block.text),
+        beforeAttrs: block.attrs,
         reason,
         status: 'pending',
       },
@@ -104,6 +113,17 @@ export function isStale(proposal: Proposal, state: DocumentState): boolean {
   if (proposal.kind !== 'body') return false;
   const block = state.body.find((b) => b.blockId === proposal.blockId);
   return !block || hashBlockText(block.text) !== proposal.baseHash;
+}
+
+const sameValue = (a: FieldValue | undefined, b: FieldValue | undefined) =>
+  JSON.stringify(a) === JSON.stringify(b);
+
+/** What the proposal changed is still exactly as Accept left it. */
+export function canUndo(proposal: Proposal, state: DocumentState): boolean {
+  if (proposal.status !== 'accepted') return false;
+  if (proposal.kind === 'field') return sameValue(state.fields[proposal.field], proposal.applied);
+  const block = state.body.find((b) => b.blockId === proposal.blockId);
+  return !!block && hashBlockText(block.text) === proposal.appliedHash;
 }
 
 export function resultFor(proposal: Proposal): ProposalResult {

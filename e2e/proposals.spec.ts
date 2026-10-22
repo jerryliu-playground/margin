@@ -25,6 +25,37 @@ test('accept a meta description proposal and save it', async ({ page }) => {
   await expect(field(page, 'Meta description')).toHaveValue(BODY);
 });
 
+test('undo an accepted proposal restores the previous value', async ({ page }) => {
+  await createDocument(page, 'Scanning', BODY);
+  await ask(page, 'Write a meta description');
+  const card = panel(page).getByRole('article', { name: 'Meta description' });
+  await card.getByRole('button', { name: 'Accept Meta description' }).click();
+  await expect(field(page, 'Meta description')).toHaveValue(BODY);
+
+  await card.getByRole('button', { name: 'Undo Meta description' }).click();
+  await expect(field(page, 'Meta description')).toHaveValue('');
+  await expect(card).toContainText('Undone.');
+  await expect(card.getByRole('button', { name: /Undo/ })).toHaveCount(0);
+  await expect(panel(page).getByLabel('Message the agent')).toBeFocused();
+});
+
+test('undo is refused after the block was edited again', async ({ page }) => {
+  await createDocument(page, 'Scanning', BODY);
+  await ask(page, 'Tighten the longest paragraph');
+  const card = panel(page).getByRole('article', { name: 'Body edit' });
+  await card.getByRole('button', { name: 'Accept Body edit' }).click();
+
+  const body = page.getByRole('textbox', { name: 'Body' });
+  await expect(body).toHaveText('People scan web pages for answers.');
+  await body.click();
+  await page.keyboard.press('End');
+  await page.keyboard.type(' Edited.');
+  await card.getByRole('button', { name: 'Undo Body edit' }).click();
+
+  await expect(card.getByRole('alert')).toContainText('can no longer be undone');
+  await expect(body).toHaveText('People scan web pages for answers. Edited.');
+});
+
 test('reject a proposal with a reason and nothing changes', async ({ page }) => {
   await createDocument(page, 'Scanning', BODY);
   await ask(page, 'Write a meta description');

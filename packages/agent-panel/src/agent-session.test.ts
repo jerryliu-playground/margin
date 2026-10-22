@@ -145,6 +145,110 @@ describe('agent session', () => {
     expect(agent.inputs[1]?.messages.at(-1)?.content).toContain('Invalid proposal: Unknown field');
   });
 
+  it('leaves server check calls alone: no card and no answer from the browser', async () => {
+    const agent = new FakeAgent([
+      (i) => [
+        started(i),
+        ...toolCall('s1', 'a11yCheck', {}),
+        {
+          type: 'TOOL_CALL_RESULT',
+          messageId: 'r1',
+          toolCallId: 's1',
+          role: 'tool',
+          content: '{"summary":"No accessibility issues found.","issues":[]}',
+        } as never,
+        ...text('m2', 'All good.'),
+        finished(i),
+      ],
+    ]);
+    const session = createAgentSession({
+      host: fakeHost(),
+      agentUrl: 'http://x',
+      createAgent: () => agent,
+    });
+    const seen = new Set<string>();
+    session.subscribe(() => seen.add(session.getSnapshot().activity));
+    await session.send('Check accessibility');
+    expect(seen).toContain('checking-a11y');
+    expect(session.getSnapshot().proposals).toEqual([]);
+    expect(agent.inputs).toHaveLength(1);
+    const tools = session.getSnapshot().messages.filter((m) => m.role === 'tool');
+    expect(tools).toHaveLength(1);
+    expect(tools[0]).toMatchObject({ toolCallId: 's1' });
+  });
+
+  describe('undo', () => {
+    const fieldTurn = () =>
+      new FakeAgent([
+        (i) => [
+          started(i),
+          ...toolCall('c1', 'proposeFieldValue', { field: 'title', value: 'Hi', reason: 'r' }),
+          finished(i, ['c1']),
+        ],
+        (i) => [started(i), finished(i)],
+      ]);
+    const bodyTurn = () =>
+      new FakeAgent([
+        (i) => [
+          started(i),
+          ...toolCall('c1', 'proposeBodyEdit', {
+            blockId: 'p1',
+            newContent: { type: 'paragraph', text: 'Short.' },
+            reason: 'r',
+          }),
+          finished(i, ['c1']),
+        ],
+        (i) => [started(i), finished(i)],
+      ]);
+
+    it('restores a field to its value before the proposal', async () => {
+      const host = fakeHost();
+      const session = createAgentSession({ host, agentUrl: 'http://x', createAgent: fieldTurn });
+      await session.send('Title');
+      await session.accept('c1');
+      expect(host.fields.title).toBe('Hi');
+      await session.undo('c1');
+      expect(host.fields.title).toBe('Hello');
+      expect(session.getSnapshot().proposals[0]?.status).toBe('undone');
+    });
+
+    it('restores a block', async () => {
+      const host = fakeHost();
+      const session = createAgentSession({ host, agentUrl: 'http://x', createAgent: bodyTurn });
+      await session.send('Tighten');
+      await session.accept('c1');
+      expect(host.blocks[0]?.text).toBe('Short.');
+      await session.undo('c1');
+      expect(host.blocks[0]).toEqual({
+        blockId: 'p1',
+        type: 'paragraph',
+        text: 'One long sentence here.',
+      });
+    });
+
+    it('refuses when the value changed after Accept, and changes nothing', async () => {
+      const host = fakeHost();
+      const session = createAgentSession({ host, agentUrl: 'http://x', createAgent: bodyTurn });
+      await session.send('Tighten');
+      await session.accept('c1');
+      host.editBlock('p1', 'Short. And more typing.');
+      await session.undo('c1');
+      expect(host.blocks[0]?.text).toBe('Short. And more typing.');
+      expect(session.getSnapshot().proposals[0]).toMatchObject({
+        status: 'accepted',
+        undoError: expect.stringContaining('can no longer be undone'),
+      });
+    });
+
+    it('ignores undo on a proposal that was not accepted', async () => {
+      const host = fakeHost();
+      const session = createAgentSession({ host, agentUrl: 'http://x', createAgent: fieldTurn });
+      await session.send('Title');
+      await session.undo('c1');
+      expect(session.getSnapshot().proposals[0]?.status).toBe('pending');
+    });
+  });
+
   it('shows a run error', async () => {
     const agent = new FakeAgent([
       (i) => [
