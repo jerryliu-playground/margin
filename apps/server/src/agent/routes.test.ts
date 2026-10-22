@@ -1,8 +1,8 @@
 import { EventType } from '@ag-ui/core';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { bearer, testApp } from '../test-helpers';
-import { testRequest } from './test-request';
+import { bearer, testApp } from '../testing/test-app';
+import { testRequest } from '../testing/test-request';
 
 let app: FastifyInstance;
 let auth: { authorization: string };

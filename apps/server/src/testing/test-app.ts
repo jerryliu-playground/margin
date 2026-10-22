@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
-import { buildApp } from './app';
-import { loadConfig } from './config';
+import { buildApp } from '../app';
+import { loadConfig } from '../config';
 
 /** An app on an in-memory database with the mock model. */
 export async function testApp(env: NodeJS.ProcessEnv = {}): Promise<FastifyInstance> {

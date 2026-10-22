@@ -43,6 +43,32 @@ const IO_IMPORT = {
     'CLAUDE.md rule 4: packages/shared has no I/O. Keep it to types, zod schemas and pure functions; do I/O in apps/server or apps/web.',
 };
 
+const SERVER_BROWSER_IMPORT = {
+  group: ['@margin/web', '@margin/web/*', '@margin/agent-panel', '**/apps/web/**', '**/web/src/**'],
+  message:
+    'CLAUDE.md rule 4: the server must not import browser code. Shared contracts belong in "@margin/shared".',
+};
+const TESTING_IMPORT = {
+  group: ['**/testing/*', './testing/*', '../testing/*'],
+  message:
+    'Test helpers in src/testing/ are for tests only. Import them from *.test.ts(x) files or other testing/ files; production code must not depend on test doubles.',
+};
+const TEST_FILES = ['**/*.test.{ts,tsx}', '**/testing/**'];
+
+/**
+ * Import boundaries for one package. Production files also may not import src/testing/.
+ * (Flat config replaces a rule's options per block, so both variants carry the full list.)
+ */
+function boundaries(glob, patterns) {
+  const rule = (extra) => ({
+    'no-restricted-imports': ['error', { patterns: [...patterns, ...extra] }],
+  });
+  return [
+    { files: [glob], ignores: TEST_FILES, rules: rule([TESTING_IMPORT]) },
+    { files: TEST_FILES.map((test) => [glob, test]), rules: rule([]) },
+  ];
+}
+
 export default tseslint.config(
   {
     ignores: ['**/dist/**', '**/coverage/**', 'playwright-report/**', 'test-results/**'],
@@ -69,52 +95,19 @@ export default tseslint.config(
     plugins: { 'react-hooks': reactHooks },
     rules: reactHooks.configs.recommended.rules,
   },
-  {
-    files: ['apps/web/**/*.{ts,tsx}'],
-    rules: { 'no-restricted-imports': ['error', { patterns: [SERVER_IMPORT] }] },
-  },
-  {
-    files: ['packages/agent-panel/**/*.{ts,tsx}'],
-    rules: {
-      'no-restricted-imports': ['error', { patterns: [SERVER_IMPORT, APP_IMPORT, HOST_IMPORT] }],
-    },
-  },
+  ...boundaries('apps/web/**/*.{ts,tsx}', [SERVER_IMPORT]),
+  ...boundaries('packages/agent-panel/**/*.{ts,tsx}', [SERVER_IMPORT, APP_IMPORT, HOST_IMPORT]),
+  ...boundaries('packages/shared/**/*.ts', [SERVER_IMPORT, APP_IMPORT, PANEL_IMPORT, IO_IMPORT]),
+  ...boundaries('apps/server/**/*.ts', [SERVER_BROWSER_IMPORT]),
   {
     files: ['packages/shared/**/*.ts'],
     rules: {
-      'no-restricted-imports': [
-        'error',
-        { patterns: [SERVER_IMPORT, APP_IMPORT, PANEL_IMPORT, IO_IMPORT] },
-      ],
       'no-restricted-globals': [
         'error',
         {
           name: 'fetch',
           message:
             'CLAUDE.md rule 4: packages/shared has no I/O. Do network calls in apps/* and pass data in.',
-        },
-      ],
-    },
-  },
-  {
-    files: ['apps/server/**/*.ts'],
-    rules: {
-      'no-restricted-imports': [
-        'error',
-        {
-          patterns: [
-            {
-              group: [
-                '@margin/web',
-                '@margin/web/*',
-                '@margin/agent-panel',
-                '**/apps/web/**',
-                '**/web/src/**',
-              ],
-              message:
-                'CLAUDE.md rule 4: the server must not import browser code. Shared contracts belong in "@margin/shared".',
-            },
-          ],
         },
       ],
     },

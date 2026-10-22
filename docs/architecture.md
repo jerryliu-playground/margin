@@ -21,6 +21,8 @@ apps/web ──────────► packages/agent-panel ──► packag
 
 These rules are enforced by ESLint (`no-restricted-imports` in `eslint.config.js`). Each error message says which rule from CLAUDE.md it protects and what to do instead.
 
+Test helpers (fakes, test apps, sample requests) live in each package's `src/testing/`. Only `*.test.ts(x)` files and other `testing/` files may import them; ESLint rejects the import anywhere else. Unit tests sit next to the code they test; e2e tests live in `e2e/`.
+
 ## Agent round trip (AG-UI)
 
 ```
@@ -60,7 +62,7 @@ append { role: "tool", toolCallId, content } and runAgent again ──► agent 
 | `checks.ts`                           | Finds server check results (tool messages) in the conversation for the issue list                   |
 | `proposals.ts`                        | Tool call → proposal (validated against shared schemas and `getSchema()`), stale check, tool result |
 | `AgentPanel.tsx` / `ProposalCard.tsx` | UI; focus moves to the next pending card or the message box after an answer                         |
-| `fake-agent.ts`                       | Test doubles: scripted AG-UI agent and in-memory `EditorHost`                                       |
+| `testing/fake-agent.ts`               | Test doubles: scripted AG-UI agent and in-memory `EditorHost`                                       |
 
 Approval rules the session enforces:
 

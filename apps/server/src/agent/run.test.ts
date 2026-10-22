@@ -7,7 +7,7 @@ import { from, lastValueFrom, toArray } from 'rxjs';
 import { describe, expect, it } from 'vitest';
 import { createMockModel } from './mock-model';
 import { runAgent } from './run';
-import { testRequest } from './test-request';
+import { testRequest } from '../testing/test-request';
 
 async function collect(
   messages: Parameters<typeof testRequest>[0],
