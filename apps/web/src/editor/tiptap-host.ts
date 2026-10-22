@@ -22,14 +22,19 @@ export function createTipTapHost({
   schema,
   getAuthToken,
 }: TipTapHostOptions): EditorHost {
-  // getState must return the same object until something changes (useSyncExternalStore).
-  let state: DocumentState = { fields: fields.get(), body: toBodyBlocks(editor) };
+  // getState returns the same object until something changes (useSyncExternalStore), and is
+  // fresh even with no subscribers: changes mark it dirty, the next read rebuilds it.
+  let state: DocumentState | undefined;
   const listeners = new Set<(s: DocumentState) => void>();
-  let unsubscribeFields: (() => void) | undefined;
-  const refresh = () => {
-    state = { fields: fields.get(), body: toBodyBlocks(editor) };
-    listeners.forEach((l) => l(state));
+  const getState = () => (state ??= { fields: fields.get(), body: toBodyBlocks(editor) });
+  const changed = () => {
+    state = undefined;
+    if (listeners.size === 0) return;
+    const next = getState();
+    listeners.forEach((l) => l(next));
   };
+  editor.on('update', changed);
+  fields.subscribe(changed);
 
   const descriptor = (name: string) => {
     const field = schema.find((f) => f.name === name);
@@ -39,19 +44,11 @@ export function createTipTapHost({
 
   return {
     getSchema: () => schema,
-    getState: () => state,
+    getState,
     subscribe(onChange) {
-      if (listeners.size === 0) {
-        editor.on('update', refresh);
-        unsubscribeFields = fields.subscribe(refresh);
-      }
       listeners.add(onChange);
       return () => {
         listeners.delete(onChange);
-        if (listeners.size === 0) {
-          editor.off('update', refresh);
-          unsubscribeFields?.();
-        }
       };
     },
     async applyFieldValue(name, value) {

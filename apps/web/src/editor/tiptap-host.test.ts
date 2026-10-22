@@ -69,6 +69,14 @@ describe('TipTap EditorHost', () => {
     await expect(h.applyFieldValue('title', 'x'.repeat(11))).rejects.toThrow(/at most 10/);
   });
 
+  it('returns fresh state even when nobody is subscribed', async () => {
+    const h = host();
+    await h.applyFieldValue('title', 'Fresh');
+    expect(h.getState().fields.title).toBe('Fresh');
+    await h.applyBodyEdit('p1', { type: 'paragraph', text: 'Changed.' });
+    expect(h.getState().body[0]?.text).toBe('Changed.');
+  });
+
   it('stops listening when the last subscriber leaves', async () => {
     const h = host();
     const onChange = vi.fn();
