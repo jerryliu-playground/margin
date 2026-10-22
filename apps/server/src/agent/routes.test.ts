@@ -35,6 +35,25 @@ describe('POST /agent', () => {
     expect(events.at(-1)?.type).toBe(EventType.RUN_FINISHED);
   });
 
+  it('refuses runs over the daily limit with a plain message', async () => {
+    const limited = await testApp({ DAILY_AGENT_RUN_LIMIT: '1' });
+    const token = await bearer(limited);
+    const send = () =>
+      limited.inject({
+        method: 'POST',
+        url: '/agent',
+        headers: { ...token, accept: 'text/event-stream' },
+        payload: body as object,
+      });
+    expect((await send()).statusCode).toBe(200);
+    const refused = await send();
+    expect(refused.statusCode).toBe(429);
+    expect(refused.json()).toMatchObject({
+      error: { code: 'daily_limit', message: expect.stringContaining('today') },
+    });
+    await limited.close();
+  });
+
   it('requires a token', async () => {
     const res = await post(body, {});
     expect(res.statusCode).toBe(401);

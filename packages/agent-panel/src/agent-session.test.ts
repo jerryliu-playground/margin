@@ -249,6 +249,26 @@ describe('agent session', () => {
     });
   });
 
+  it("shows the server's message when the request is refused", async () => {
+    const refusing = new FakeAgent([]);
+    refusing.run = () => {
+      const error = Object.assign(new Error('HTTP 429: …'), {
+        status: 429,
+        payload: {
+          error: { code: 'daily_limit', message: "The demo has used today's agent runs." },
+        },
+      });
+      throw error;
+    };
+    const session = createAgentSession({
+      host: fakeHost(),
+      agentUrl: 'http://x',
+      createAgent: () => refusing,
+    });
+    await session.send('Hi');
+    expect(session.getSnapshot().error).toBe("The demo has used today's agent runs.");
+  });
+
   it('shows a run error', async () => {
     const agent = new FakeAgent([
       (i) => [

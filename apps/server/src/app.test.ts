@@ -54,6 +54,37 @@ describe('server', () => {
     rmSync(dist, { recursive: true, force: true });
   });
 
+  it('uses X-Forwarded-For for the client IP only when TRUST_PROXY is on', async () => {
+    const trusted = await testApp({ TRUST_PROXY: 'true', RATE_LIMIT_PER_MINUTE: '1' });
+    const a = await trusted.inject({
+      method: 'GET',
+      url: '/health',
+      headers: { 'x-forwarded-for': '1.1.1.1' },
+    });
+    const b = await trusted.inject({
+      method: 'GET',
+      url: '/health',
+      headers: { 'x-forwarded-for': '2.2.2.2' },
+    });
+    expect([a.statusCode, b.statusCode]).toEqual([200, 200]); // two clients, one request each
+    await trusted.close();
+
+    // Without TRUST_PROXY the header is ignored: both requests come from the same IP.
+    const direct = await testApp({ RATE_LIMIT_PER_MINUTE: '1' });
+    const c = await direct.inject({
+      method: 'GET',
+      url: '/health',
+      headers: { 'x-forwarded-for': '1.1.1.1' },
+    });
+    const d = await direct.inject({
+      method: 'GET',
+      url: '/health',
+      headers: { 'x-forwarded-for': '2.2.2.2' },
+    });
+    expect([c.statusCode, d.statusCode]).toEqual([200, 429]);
+    await direct.close();
+  });
+
   it('refuses the anthropic model without a key', () => {
     expect(() => loadConfig({ MARGIN_MODEL: 'anthropic' })).toThrow(/ANTHROPIC_API_KEY/);
   });

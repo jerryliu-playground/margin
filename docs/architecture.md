@@ -71,6 +71,12 @@ Approval rules the session enforces:
 - A body proposal whose block changed (hash differs from `baseHash`) cannot be accepted; dismissing it answers `stale`.
 - Undo restores the value from before the proposal, only if the field value or the block's hash is unchanged since Accept (`canUndo` in `proposals.ts`). It sends nothing to the agent.
 
+## Public demo protection (apps/server/src/demo.ts)
+
+- Per-IP rate limits on every route (`@fastify/rate-limit`); behind a proxy `TRUST_PROXY=true` makes them see the real client IP.
+- A global cap on agent runs per UTC day (`DAILY_AGENT_RUN_LIMIT`), answered with a plain 429 that the panel shows as is.
+- A cap on stored documents (`MAX_DOCUMENTS`), and an optional nightly reset to the seeded article (`DEMO_RESET_HOUR_UTC`).
+
 ## Auth
 
 The panel never holds the model key. It calls `EditorHost.getAuthToken()` and sends the token as a bearer header. The server holds the model key from environment variables (ADR 0006).

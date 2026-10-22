@@ -71,6 +71,18 @@ describe('/documents', () => {
     expect(res.json().error.message).toContain('slug');
   });
 
+  it('refuses new documents past MAX_DOCUMENTS', async () => {
+    const small = await testApp({ MAX_DOCUMENTS: '2' });
+    const token = await bearer(small);
+    const create = () =>
+      small.inject({ method: 'POST', url: '/documents', headers: token, payload: {} });
+    expect((await create()).statusCode).toBe(201); // the seed is the first
+    const refused = await create();
+    expect(refused.statusCode).toBe(409);
+    expect(refused.json()).toMatchObject({ error: { code: 'document_limit' } });
+    await small.close();
+  });
+
   it('returns 404 for an unknown id and 400 for a malformed one', async () => {
     const unknown = await app.inject({
       method: 'GET',

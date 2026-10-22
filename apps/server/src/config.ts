@@ -22,6 +22,17 @@ const envSchema = z.object({
   /** Requests per minute per IP, for all routes. /agent has its own lower limit. */
   RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(120),
   AGENT_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(20),
+  /** Agent runs per UTC day for the whole server (public demo cost cap). */
+  DAILY_AGENT_RUN_LIMIT: z.coerce.number().int().positive().default(300),
+  /** Most documents the server keeps; creating more is refused. */
+  MAX_DOCUMENTS: z.coerce.number().int().positive().default(200),
+  /** If set (0–23), the database resets to the seeded article once a day at this UTC hour. */
+  DEMO_RESET_HOUR_UTC: z.coerce.number().int().min(0).max(23).optional(),
+  /** Behind a proxy (Fly.io), read the client IP from X-Forwarded-For so per-IP limits work. */
+  TRUST_PROXY: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
 });
 
 export type Config = z.infer<typeof envSchema>;

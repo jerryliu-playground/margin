@@ -7,6 +7,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import { createModelFactory } from './agent/model';
 import { agentRoutes } from './agent/routes';
 import { createTokenService, randomSecret } from './auth';
+import { createDailyCounter, scheduleNightlyReset } from './demo';
 import type { Config } from './config';
 import { openDb } from './db/client';
 import { createDocumentRepository } from './documents/repository';
@@ -17,6 +18,7 @@ import { HttpError, apiError } from './errors';
 export async function buildApp(config: Config): Promise<FastifyInstance> {
   const app = Fastify({
     bodyLimit: 512 * 1024,
+    trustProxy: config.TRUST_PROXY,
     logger:
       config.NODE_ENV === 'test'
         ? false
@@ -31,6 +33,12 @@ export async function buildApp(config: Config): Promise<FastifyInstance> {
   app.addHook('onClose', async () => db.close());
   const repo = createDocumentRepository(db);
   seedIfEmpty(repo);
+  if (config.DEMO_RESET_HOUR_UTC !== undefined) {
+    const stop = scheduleNightlyReset(repo, config.DEMO_RESET_HOUR_UTC, () =>
+      app.log.warn('demo database reset to the seeded article'),
+    );
+    app.addHook('onClose', async () => stop());
+  }
   const tokens = createTokenService(config.MARGIN_TOKEN_SECRET ?? randomSecret());
 
   await app.register(cors, {
@@ -86,12 +94,13 @@ export async function buildApp(config: Config): Promise<FastifyInstance> {
         );
       }
     });
-    await secured.register(documentRoutes(repo));
+    await secured.register(documentRoutes(repo, config.MAX_DOCUMENTS));
     await secured.register(
       agentRoutes({
         createModel: createModelFactory(config),
         maxOutputTokens: config.MARGIN_MAX_OUTPUT_TOKENS,
         ratePerMinute: config.AGENT_RATE_LIMIT_PER_MINUTE,
+        dailyRuns: createDailyCounter(config.DAILY_AGENT_RUN_LIMIT),
       }),
     );
   });

@@ -1,5 +1,6 @@
 import { HttpAgent, type AbstractAgent, type AgentSubscriber, type Message } from '@ag-ui/client';
 import {
+  apiErrorSchema,
   frontendToolDefinitions,
   hashBlockText,
   serverTools,
@@ -36,6 +37,12 @@ export interface AgentSessionOptions {
   agentUrl: string;
   /** For tests: supply any AG-UI agent instead of the HTTP one. */
   createAgent?: (url: string) => AbstractAgent;
+}
+
+/** The server's own message from an HTTP error (the AG-UI client keeps the JSON body as `payload`). */
+function serverMessage(error: unknown): string | undefined {
+  const parsed = apiErrorSchema.safeParse((error as { payload?: unknown } | null)?.payload);
+  return parsed.success ? parsed.data.error.message : undefined;
 }
 
 let idCounter = 0;
@@ -111,7 +118,10 @@ export function createAgentSession({ host, agentUrl, createAgent }: AgentSession
       await agent.runAgent({ runId: newId('run'), tools: frontendToolDefinitions() }, subscriber);
     } catch (error) {
       update({
-        error: snapshot.error ?? `The agent is not reachable: ${(error as Error).message}`,
+        error:
+          snapshot.error ??
+          serverMessage(error) ??
+          `The agent is not reachable: ${(error as Error).message}`,
       });
     } finally {
       update({ running: false, activity: 'idle', messages: [...agent.messages] });
