@@ -177,6 +177,51 @@ describe('agent session', () => {
     expect(tools[0]).toMatchObject({ toolCallId: 's1' });
   });
 
+  it('accepts every pending proposal at once and continues once with all answers', async () => {
+    const host = fakeHost();
+    const agent = new FakeAgent([
+      (i) => [
+        started(i),
+        ...toolCall('c1', 'proposeFieldValue', { field: 'title', value: 'A', reason: 'r' }),
+        ...toolCall('c2', 'proposeFieldValue', {
+          field: 'metaDescription',
+          value: 'B',
+          reason: 'r',
+        }),
+        finished(i, ['c1', 'c2']),
+      ],
+      (i) => [started(i), finished(i)],
+    ]);
+    const session = createAgentSession({ host, agentUrl: 'http://x', createAgent: () => agent });
+    await session.send('Two things');
+    await session.acceptAll();
+    expect(host.fields).toMatchObject({ title: 'A', metaDescription: 'B' });
+    expect(agent.inputs).toHaveLength(2);
+    expect(agent.inputs[1]?.messages.filter((m) => m.role === 'tool')).toHaveLength(2);
+  });
+
+  it('rejects every pending proposal at once', async () => {
+    const host = fakeHost();
+    const agent = new FakeAgent([
+      (i) => [
+        started(i),
+        ...toolCall('c1', 'proposeFieldValue', { field: 'title', value: 'A', reason: 'r' }),
+        ...toolCall('c2', 'proposeFieldValue', {
+          field: 'metaDescription',
+          value: 'B',
+          reason: 'r',
+        }),
+        finished(i, ['c1', 'c2']),
+      ],
+      (i) => [started(i), finished(i)],
+    ]);
+    const session = createAgentSession({ host, agentUrl: 'http://x', createAgent: () => agent });
+    await session.send('Two things');
+    await session.rejectAll();
+    expect(host.fields).toMatchObject({ title: 'Hello', metaDescription: '' });
+    expect(session.getSnapshot().proposals.map((p) => p.status)).toEqual(['rejected', 'rejected']);
+  });
+
   describe('undo', () => {
     const fieldTurn = () =>
       new FakeAgent([

@@ -87,6 +87,18 @@ test('accept a body edit; it replaces only that block', async ({ page }) => {
   await expect(page.getByRole('main').getByRole('status')).toHaveText('Unsaved changes');
 });
 
+test('accept all applies every pending proposal', async ({ page }) => {
+  await createDocument(page, 'A title that is fine', BODY);
+  await ask(page, 'Suggest a title and tags');
+  const batch = panel(page).getByRole('group', { name: 'All pending proposals' });
+  await batch.getByRole('button', { name: 'Accept all 2' }).click();
+
+  await expect(field(page, 'Tags')).toHaveValue('writing, web, style');
+  await expect(panel(page).getByRole('article', { name: 'Title' })).toContainText('Accepted');
+  await expect(batch).toHaveCount(0);
+  await expect(panel(page).getByLabel('Message the agent')).toBeFocused();
+});
+
 test('two proposals in one turn: focus moves to the next card', async ({ page }) => {
   await createDocument(page, 'A title that is fine', BODY);
   await ask(page, 'Suggest a title and tags');

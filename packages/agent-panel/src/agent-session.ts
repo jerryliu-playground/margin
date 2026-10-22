@@ -249,6 +249,18 @@ export function createAgentSession({ host, agentUrl, createAgent }: AgentSession
       await continueIfAnswered();
     },
     /**
+     * Batch review (SPEC feature 10): answers every pending proposal the same way. Each one
+     * goes through accept/reject, so outdated ones become stale and the run continues once.
+     */
+    async acceptAll(): Promise<void> {
+      const ids = snapshot.proposals.filter((p) => p.status === 'pending').map((p) => p.toolCallId);
+      for (const id of ids) await this.accept(id);
+    },
+    async rejectAll(): Promise<void> {
+      const ids = snapshot.proposals.filter((p) => p.status === 'pending').map((p) => p.toolCallId);
+      for (const id of ids) await this.reject(id);
+    },
+    /**
      * Restores what an accepted proposal replaced, if nothing changed it since (SPEC feature 9).
      * Local to the editor: the agent sees the restored value in the next run's state.
      */

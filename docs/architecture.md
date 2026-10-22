@@ -69,6 +69,7 @@ Approval rules the session enforces:
 - A turn's proposals are answered together: the next run starts when every tool call of the turn has an answer.
 - An invalid tool call is never shown; it is answered `rejected` with the validation error. More than two all-invalid turns in a row stop with an error.
 - A body proposal whose block changed (hash differs from `baseHash`) cannot be accepted; dismissing it answers `stale`.
+- Accept all / Reject all (shown when two or more proposals are pending) answer each pending proposal through the same accept/reject path, so outdated ones become `stale` and the run continues once.
 - Undo restores the value from before the proposal, only if the field value or the block's hash is unchanged since Accept (`canUndo` in `proposals.ts`). It sends nothing to the agent.
 
 ## Public demo protection (apps/server/src/demo.ts)

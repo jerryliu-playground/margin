@@ -73,6 +73,12 @@ export function AgentPanel({ host, agentUrl }: AgentPanelProps) {
     });
   };
 
+  /** After a batch answer nothing is pending, so focus goes to the message box. */
+  const answerAll = (act: (s: AgentSession) => Promise<void>) => {
+    void act(session);
+    requestAnimationFrame(() => inputRef.current?.focus());
+  };
+
   const checks = checkEntries(snapshot.messages);
   // The status line is a live region: it tells screen reader users that cards arrived.
   const pendingCount = snapshot.proposals.filter((p) => p.status === 'pending').length;
@@ -114,6 +120,24 @@ export function AgentPanel({ host, agentUrl }: AgentPanelProps) {
       </div>
       {snapshot.proposals.length > 0 && (
         <section className="margin-panel__proposals" aria-label="Proposals">
+          {pendingCount > 1 && (
+            <div className="margin-panel__batch" role="group" aria-label="All pending proposals">
+              <button
+                type="button"
+                className="margin-panel__button"
+                onClick={() => answerAll((s) => s.acceptAll())}
+              >
+                Accept all {pendingCount}
+              </button>
+              <button
+                type="button"
+                className="margin-panel__button"
+                onClick={() => answerAll((s) => s.rejectAll())}
+              >
+                Reject all {pendingCount}
+              </button>
+            </div>
+          )}
           {snapshot.proposals.map((p) => (
             <ProposalCard
               key={p.toolCallId}
