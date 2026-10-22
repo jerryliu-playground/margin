@@ -6,11 +6,65 @@ body {
   color: #1f2328;
   background: #ffffff;
 }
-.app {
-  display: grid;
-  grid-template-columns: 1fr 360px;
-  min-height: 100vh;
-}
-.app__main {
+.page {
+  max-width: 760px;
   padding: 24px 32px;
+}
+.page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.muted {
+  color: #57606a;
+  font-size: 14px;
+}
+.doc-list {
+  padding-left: 20px;
+}
+.doc-form {
+  display: grid;
+  gap: 16px;
+}
+.doc-form label,
+.doc-form__body {
+  display: grid;
+  gap: 4px;
+  font-weight: 600;
+}
+.doc-form input,
+.doc-form textarea {
+  font: inherit;
+  font-weight: 400;
+  padding: 6px 8px;
+  border: 1px solid #8c959f;
+  border-radius: 6px;
+}
+.doc-form__actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.body-editor {
+  min-height: 240px;
+  padding: 8px 12px;
+  border: 1px solid #8c959f;
+  border-radius: 6px;
+  font-weight: 400;
+}
+.body-editor:focus-visible,
+.doc-form input:focus-visible,
+.doc-form textarea:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid #0969da;
+  outline-offset: 2px;
+}
+button {
+  font: inherit;
+  padding: 6px 14px;
+  border: 1px solid #1f2328;
+  border-radius: 6px;
+  background: #f6f8fa;
+  cursor: pointer;
 }

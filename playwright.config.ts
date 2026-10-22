@@ -1,7 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const WEB_URL = 'http://localhost:4173';
-const SERVER_URL = 'http://127.0.0.1:8787';
+// Dedicated ports so e2e never reuses a dev server (or another project's server) by accident.
+const WEB_PORT = 14173;
+const SERVER_PORT = 18787;
+const WEB_URL = `http://localhost:${WEB_PORT}`;
+export const SERVER_URL = `http://127.0.0.1:${SERVER_PORT}`;
 
 export default defineConfig({
   testDir: 'e2e',
@@ -20,15 +23,15 @@ export default defineConfig({
         NODE_ENV: 'test',
         MARGIN_DB_PATH: ':memory:',
         WEB_ORIGIN: WEB_URL,
-        PORT: '8787',
+        PORT: String(SERVER_PORT),
       },
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: false,
     },
     {
-      command: 'pnpm --filter @margin/web build && pnpm --filter @margin/web preview',
+      command: `pnpm --filter @margin/web build && pnpm --filter @margin/web preview --port ${WEB_PORT}`,
       url: WEB_URL,
       env: { VITE_AGENT_URL: SERVER_URL },
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: false,
     },
   ],
 });

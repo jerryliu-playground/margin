@@ -12,8 +12,14 @@
   "dependencies": {
     "@margin/agent-panel": "workspace:*",
     "@margin/shared": "workspace:*",
+    "@tiptap/core": "3.32.0",
+    "@tiptap/extension-unique-id": "3.32.0",
+    "@tiptap/pm": "3.32.0",
+    "@tiptap/react": "3.32.0",
+    "@tiptap/starter-kit": "3.32.0",
     "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "react-dom": "18.3.1",
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@types/react": "18.3.31",

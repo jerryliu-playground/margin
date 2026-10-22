@@ -1,17 +1,20 @@
-import { AgentPanel } from '@margin/agent-panel';
-import { createStaticHost } from './static-host';
-
-const host = createStaticHost();
-const agentUrl = import.meta.env.VITE_AGENT_URL ?? 'http://localhost:8787';
+import { DocumentListPage } from './pages/DocumentListPage';
+import { DocumentPage } from './pages/DocumentPage';
+import { useRoute } from './router';
 
 export function App() {
-  return (
-    <div className="app">
-      <main className="app__main">
-        <h1>Margin</h1>
-        <p>The editor arrives in Phase 1.</p>
-      </main>
-      <AgentPanel host={host} agentUrl={agentUrl} />
-    </div>
-  );
+  const route = useRoute();
+  switch (route.name) {
+    case 'list':
+      return <DocumentListPage />;
+    case 'document':
+      return <DocumentPage key={route.id} id={route.id} />;
+    case 'not-found':
+      return (
+        <main className="page">
+          <h1>Page not found</h1>
+          <a href="#/">All documents</a>
+        </main>
+      );
+  }
 }

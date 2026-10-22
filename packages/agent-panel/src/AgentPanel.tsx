@@ -3,7 +3,7 @@ import type { EditorHost } from '@margin/shared';
 
 export interface AgentPanelProps {
   host: EditorHost;
-  /** Base URL of the agent server, e.g. http://localhost:8787 */
+  /** Base URL of the agent server, e.g. http://localhost:8790 */
   agentUrl: string;
 }
 

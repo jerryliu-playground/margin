@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  PORT: z.coerce.number().int().positive().default(8787),
+  PORT: z.coerce.number().int().positive().default(8790),
   WEB_ORIGIN: z.url().default('http://localhost:5173'),
   /** "mock" = deterministic mock model (tests, offline dev). "anthropic" = Claude. */
   MARGIN_MODEL: z.enum(['mock', 'anthropic']).default('mock'),

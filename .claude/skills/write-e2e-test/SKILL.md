@@ -9,8 +9,8 @@ description: Conventions for writing Margin's Playwright end-to-end tests, inclu
 
 `playwright.config.ts` starts two servers before the tests:
 
-- `apps/server` with `MARGIN_MODEL=mock` and `NODE_ENV=test` on `http://127.0.0.1:8787`;
-- a production build of `apps/web` (`vite preview`) on `http://localhost:4173`, pointing at that server.
+- `apps/server` with `MARGIN_MODEL=mock` and `NODE_ENV=test` on `http://127.0.0.1:18787` (a dedicated port; `reuseExistingServer` is off);
+- a production build of `apps/web` (`vite preview`) on `http://localhost:14173`, pointing at that server.
 
 Never set `MARGIN_MODEL=anthropic` or an API key in a test (CLAUDE.md rule 5). If a test needs a specific agent answer, add a scripted reply to the server's mock model (keyed by the user's message), not a network intercept in the browser. The point of e2e is to exercise the real AG-UI stream.
 
