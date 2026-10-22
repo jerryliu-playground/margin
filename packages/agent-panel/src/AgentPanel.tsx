@@ -73,6 +73,10 @@ export function AgentPanel({ host, agentUrl }: AgentPanelProps) {
   };
 
   const checks = checkEntries(snapshot.messages);
+  // The status line is a live region: it tells screen reader users that cards arrived.
+  const pendingCount = snapshot.proposals.filter((p) => p.status === 'pending').length;
+  const pendingText =
+    pendingCount === 0 ? '' : `${pendingCount} proposal${pendingCount > 1 ? 's' : ''} to review.`;
   const visible = snapshot.messages.filter(
     (m) => ((m.role === 'user' || m.role === 'assistant') && textOf(m) !== '') || checks.has(m.id),
   );
@@ -122,7 +126,7 @@ export function AgentPanel({ host, agentUrl }: AgentPanelProps) {
         </section>
       )}
       <p className="margin-panel__status" role="status">
-        {ACTIVITY_TEXT[snapshot.activity]}
+        {ACTIVITY_TEXT[snapshot.activity] || pendingText}
       </p>
       {snapshot.error && (
         <p className="margin-panel__error" role="alert">

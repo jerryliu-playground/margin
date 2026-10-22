@@ -9,7 +9,7 @@ description: Conventions for writing Margin's Playwright end-to-end tests, inclu
 
 `playwright.config.ts` starts two servers before the tests:
 
-- `apps/server` with `MARGIN_MODEL=mock` and `NODE_ENV=test` on `http://127.0.0.1:18787` (a dedicated port; `reuseExistingServer` is off);
+- `apps/server` with `MARGIN_MODEL=mock` and `NODE_ENV=test` on `http://127.0.0.1:18787` (a dedicated port; `reuseExistingServer` is off; rate limits lifted, because the suite makes many agent runs per minute; test rate limiting with `app.inject()` instead);
 - a production build of `apps/web` (`vite preview`) on `http://localhost:14173`, pointing at that server.
 
 Never set `MARGIN_MODEL=anthropic` or an API key in a test (CLAUDE.md rule 5). If a test needs a specific agent answer, add a scripted reply to the server's mock model (keyed by the user's message), not a network intercept in the browser. The point of e2e is to exercise the real AG-UI stream.
@@ -24,10 +24,11 @@ Never set `MARGIN_MODEL=anthropic` or an API key in a test (CLAUDE.md rule 5). I
    const axe = await new AxeBuilder({ page }).analyze();
    expect(axe.violations, JSON.stringify(axe.violations, null, 2)).toEqual([]);
    ```
-5. **Focus:** after Accept or Reject, assert where focus went (`await expect(locator).toBeFocused()`).
-6. **Approval flows** need both sides: an Accept test that checks the value changed (and is saved, if the flow saves), and a Reject test that checks nothing changed.
-7. **Isolation:** each test creates the document it needs (`createDocument` in `e2e/helpers.ts`); don't depend on another test's data. The seeded article is read-only for tests.
-8. **Scope every lookup.** The editor form and the agent panel share roles and labels (two `status` regions; a proposal card is named after the field it changes). Use `field(page, 'Title')` for form fields, `panel(page)` for the panel, and `page.getByRole('main')` for anything else in the editor. Unscoped `page.getByLabel(...)` / `page.getByRole('status')` will hit strict-mode errors.
+5. **Keyboard:** user flows that matter get one keyboard-only test (see `tabTo` in `e2e/a11y.spec.ts`): reach controls with Tab / Shift+Tab, act with Enter.
+6. **Focus:** after Accept or Reject, assert where focus went (`await expect(locator).toBeFocused()`).
+7. **Approval flows** need both sides: an Accept test that checks the value changed (and is saved, if the flow saves), and a Reject test that checks nothing changed.
+8. **Isolation:** each test creates the document it needs (`createDocument` in `e2e/helpers.ts`); don't depend on another test's data. The seeded article is read-only for tests.
+9. **Scope every lookup.** The editor form and the agent panel share roles and labels (two `status` regions; a proposal card is named after the field it changes). Use `field(page, 'Title')` for form fields, `panel(page)` for the panel, and `page.getByRole('main')` for anything else in the editor. Unscoped `page.getByLabel(...)` / `page.getByRole('status')` will hit strict-mode errors.
 
 ## Driving the agent
 
