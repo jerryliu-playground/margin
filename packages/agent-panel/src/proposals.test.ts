@@ -68,6 +68,24 @@ describe('parseProposal', () => {
   });
 });
 
+describe('the smoke-test case: a 175-character meta description', () => {
+  it('is refused before a card is shown when the host allows 160', () => {
+    const host = fakeHost();
+    const schema = host
+      .getSchema()
+      .map((f) => (f.name === 'metaDescription' ? { ...f, maxLength: 160 } : f));
+    host.getSchema = () => schema;
+    const res = parseProposal(
+      call('proposeFieldValue', { field: 'metaDescription', value: 'x'.repeat(175), reason: 'r' }),
+      host,
+    );
+    expect(res).toEqual({
+      ok: false,
+      error: 'Field "metaDescription" allows at most 160 characters.',
+    });
+  });
+});
+
 describe('isStale and resultFor', () => {
   it('detects a changed block', () => {
     const host = fakeHost();
