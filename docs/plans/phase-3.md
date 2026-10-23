@@ -2,7 +2,7 @@
 
 Approved by the owner on 2026-10-22. One concern per commit; each commit passes `pnpm check` on its own (CLAUDE.md rule 8).
 
-**Goal (SPEC §7):** deployed demo, 2–3 minute video, README with the harness write-up; plus the Phase 3 features (10 batch review, 11 tone presets, 12 deployed demo with seed and rate limiting).
+**Goal (SPEC §7):** deployed demo, README with the harness write-up (the video moved to after Phase 4 on 2026-10-22); plus the Phase 3 features (10 batch review, 11 tone presets, 12 deployed demo with seed and rate limiting).
 
 **Resuming:** compare the steps with `git log --oneline`. Each step's commit subject starts with its tag (e.g. `P3.4`). Start at the first unticked step and tick it in the same commit.
 
@@ -36,7 +36,7 @@ PR B:
 
 ## Owner-only actions
 
-Fly.io account and payment method; `fly secrets set` with the real key; `FLY_API_TOKEN` repository secret; recording the video.
+Fly.io account and payment method; `fly secrets set` with the real key; `FLY_API_TOKEN` repository secret. (Recording the video moved to after Phase 4.)
 
 ## Risks to watch
 

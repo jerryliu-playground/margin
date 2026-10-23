@@ -1,5 +1,7 @@
 # Demo video script (2–3 minutes)
 
+> Recording moved to after Phase 4 (SPEC §7). Add a short Strapi segment before recording.
+
 For the owner to record. Narration in English; timings are targets.
 
 ## Before recording

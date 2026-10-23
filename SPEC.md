@@ -138,36 +138,40 @@ Stored `body` is the demo editor's format. What the agent and the panel see is t
 
 ## 7. Milestones and acceptance criteria
 
-**Phase 0 — Harness and skeleton (week 1)**
+Phases are ordered by dependency, not by calendar. The original week estimates assumed hand-written code; with the agent harness, Phases 0–3 were built on 2026-10-21 and 2026-10-22. Each phase records its completion date.
+
+**Phase 0 — Harness and skeleton** (done 2026-10-21)
 
 - Monorepo, strict TS, lint, format, Vitest, Playwright, CI (GitHub Actions) all green on an empty app.
 - CLAUDE.md, docs/ structure, first ADRs (editor, agent framework, AG-UI client, storage).
 - At least two project skills written (see §8).
 - Done when: `pnpm check` runs typecheck + lint + unit tests + e2e smoke test and passes in CI.
 
-**Phase 1 — MVP (weeks 2–3)**
+**Phase 1 — MVP** (done 2026-10-22)
 
 - Features 1–6.
 - Done when: an e2e test opens an article, asks the agent for a meta description, sees a proposal card, accepts it, and the field is saved. A second test rejects a proposal and confirms nothing changed.
 
-**Phase 2 — Checks and polish (week 3–4)**
+**Phase 2 — Checks and polish** (done 2026-10-22)
 
 - Features 7–9, keyboard-accessible proposal cards, focus management after accept/reject, axe passes on all screens.
 
-**Phase 3 — Showcase (week 4)**
+**Phase 3 — Showcase** (done 2026-10-22, except the video)
 
-- Deployed demo, 2–3 minute video, README with the harness write-up.
+- Deployed demo, README with the harness write-up.
+- The 2–3 minute video moved to after Phase 4 (owner, 2026-10-22), so it can show the panel in the demo app and in Strapi.
 
 **Phase 4 — Strapi plugin (after the showcase)**
 
 - A Strapi 5 plugin that adds the agent panel to the Content Manager edit view, implementing `EditorHost` on top of Strapi's form state.
 - Done when: in a local Strapi project with a sample content type, the agent proposes a meta description, the editor accepts it, and the Strapi entry shows the new value after saving.
+- Then: record the 2–3 minute video (`docs/demo-script.md`, updated with a Strapi segment).
 
 **Phase 5 — WordPress plugin (optional)**
 
 - A WordPress plugin that adds the agent panel as a block-editor (Gutenberg) sidebar, implementing `EditorHost` on top of the editor's data store.
 
-Phases 4–5 must not start until Phase 3 is shipped. Only the `EditorHost` boundary is required early.
+Phases 4–5 start after Phase 3 is shipped (the video excepted, see above). Only the `EditorHost` boundary is required early.
 
 ## 8. The harness (deliverable, not decoration)
 
