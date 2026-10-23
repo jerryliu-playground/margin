@@ -115,6 +115,8 @@ describe('runAgent', () => {
     };
     await collect(ask('Hello'), spy);
     expect(prompt).toContain('Never invent facts');
+    expect(prompt).toContain('never guess it from a file name or URL');
+    expect(prompt).toContain('The document state below is the truth.');
     expect(prompt).toContain('"blockId\\":\\"p2');
   });
 
@@ -182,6 +184,33 @@ describe('runAgent', () => {
       .filter((e) => e.type === EventType.TOOL_CALL_START)
       .map((e) => (e as BaseEvent & { toolCallName: string }).toolCallName);
     expect(names).toEqual(['seoCheck', 'proposeFieldValue']);
+  });
+
+  it('puts editor context (undos) into the system prompt, marked as facts', async () => {
+    const request = testRequest(ask('Check again'));
+    request.context = [
+      {
+        description: 'Editor events since your last turn',
+        value: JSON.stringify([{ type: 'undo-block', blockId: 'p1' }]),
+      },
+    ];
+    const model = createMockModel(request);
+    let prompt = '';
+    const spy: LanguageModelV4 = {
+      ...model,
+      doStream: (options) => {
+        prompt = JSON.stringify(options.prompt);
+        return model.doStream(options);
+      },
+    };
+    const events = await collect(request.messages, spy, request);
+    expect(prompt).toContain('Since your last turn, in the editor:');
+    expect(prompt).toContain('The user undid your accepted edit to block p1;');
+    const text = events
+      .filter((e) => e.type === EventType.TEXT_MESSAGE_CONTENT)
+      .map((e) => (e as BaseEvent & { delta: string }).delta)
+      .join('');
+    expect(text).toContain('I see you undid my last change');
   });
 
   it('turns a model failure into RUN_ERROR without leaking details', async () => {

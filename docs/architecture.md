@@ -38,6 +38,7 @@ append { role: "tool", toolCallId, content } and runAgent again ──► agent 
 ```
 
 - **Shared state:** the panel sends `{ schema: EditorHost.getSchema(), document: EditorHost.getState() }` (`AgentState`) as `RunAgentInput.state` on every run. The server never writes state back in the MVP.
+- **Editor context:** things the user did that the history cannot show (undos) travel as AG-UI `context` on the next run: one entry, description `Editor events since your last turn`, value a JSON list of structured events (`editorEventSchema`). The server writes the sentences itself, so no client text reaches the system prompt. Events are cleared only after a run succeeds.
 - **Request contract:** `agentRunRequestSchema` in `packages/shared/src/agent.ts` is the subset of AG-UI `RunAgentInput` we accept. Clients cannot send `system` or `developer` messages; the server owns the system prompt.
 - **Frontend tools:** `proposeFieldValue`, `proposeBodyEdit`. Defined in `packages/shared`, sent as `RunAgentInput.tools`, never executed on the server.
 - **Server tools:** `a11yCheck`, `seoCheck` (pure checks in `packages/shared/src/checks.ts`). Always available, executed on the server on this run's document state. The call streams as `TOOL_CALL_START/ARGS/END`, the result as `TOOL_CALL_RESULT`, and the model continues in the same run (each model step is its own assistant message). The panel never answers them.
@@ -70,7 +71,7 @@ Approval rules the session enforces:
 - An invalid tool call is never shown; it is answered `rejected` with the validation error. More than two all-invalid turns in a row stop with an error.
 - A body proposal whose block changed (hash differs from `baseHash`) cannot be accepted; dismissing it answers `stale`.
 - Accept all / Reject all (shown when two or more proposals are pending) answer each pending proposal through the same accept/reject path, so outdated ones become `stale` and the run continues once.
-- Undo restores the value from before the proposal, only if the field value or the block's hash is unchanged since Accept (`canUndo` in `proposals.ts`). It sends nothing to the agent.
+- Undo restores the value from before the proposal, only if the field value or the block's hash is unchanged since Accept (`canUndo` in `proposals.ts`). The next run tells the agent, once, through AG-UI `context` as a structured event (see Editor context above).
 
 ## Public demo protection (apps/server/src/demo.ts)
 

@@ -271,6 +271,68 @@ describe('agent session', () => {
       });
     });
 
+    it("tells the agent about the undo once, in the next run's context", async () => {
+      const host = fakeHost();
+      const agent = new FakeAgent([
+        (i) => [
+          started(i),
+          ...toolCall('c1', 'proposeFieldValue', { field: 'title', value: 'Hi', reason: 'r' }),
+          finished(i, ['c1']),
+        ],
+        (i) => [started(i), finished(i)],
+        (i) => [started(i), finished(i)],
+        (i) => [started(i), finished(i)],
+      ]);
+      const session = createAgentSession({ host, agentUrl: 'http://x', createAgent: () => agent });
+      await session.send('Title');
+      await session.accept('c1'); // run 2: the answer, no events yet
+      expect(agent.inputs[1]?.context).toEqual([]);
+      await session.undo('c1');
+      await session.send('Check again'); // run 3 carries the undo
+      expect(agent.inputs[2]?.context).toEqual([
+        {
+          description: 'Editor events since your last turn',
+          value: JSON.stringify([{ type: 'undo-field', field: 'title' }]),
+        },
+      ]);
+      await session.send('And again'); // run 4: already told
+      expect(agent.inputs[3]?.context).toEqual([]);
+    });
+
+    it('keeps the undo for the next run when a run fails', async () => {
+      const host = fakeHost();
+      const scripts = [
+        (i: Parameters<typeof started>[0]) => [
+          started(i),
+          ...toolCall('c1', 'proposeFieldValue', { field: 'title', value: 'Hi', reason: 'r' }),
+          finished(i, ['c1']),
+        ],
+        (i: Parameters<typeof started>[0]) => [started(i), finished(i)],
+      ];
+      const agent = new FakeAgent(scripts);
+      const session = createAgentSession({ host, agentUrl: 'http://x', createAgent: () => agent });
+      await session.send('Title');
+      await session.accept('c1');
+      await session.undo('c1');
+
+      const realRun = agent.run.bind(agent);
+      agent.run = () => {
+        throw Object.assign(new Error('HTTP 503'), { status: 503 });
+      };
+      await session.send('Check again'); // fails
+      expect(session.getSnapshot().error).toBeDefined();
+
+      agent.run = realRun;
+      scripts.push((i) => [started(i), finished(i)]);
+      await session.send('Retry');
+      expect(agent.inputs.at(-1)?.context).toEqual([
+        {
+          description: 'Editor events since your last turn',
+          value: JSON.stringify([{ type: 'undo-field', field: 'title' }]),
+        },
+      ]);
+    });
+
     it('refuses when the value changed after Accept, and changes nothing', async () => {
       const host = fakeHost();
       const session = createAgentSession({ host, agentUrl: 'http://x', createAgent: bodyTurn });

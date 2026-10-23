@@ -39,6 +39,18 @@ test('undo an accepted proposal restores the previous value', async ({ page }) =
   await expect(panel(page).getByLabel('Message the agent')).toBeFocused();
 });
 
+test('after an undo, the agent is told and works from the current document', async ({ page }) => {
+  await createDocument(page, 'Scanning', BODY);
+  await ask(page, 'Write a meta description');
+  const card = panel(page).getByRole('article', { name: 'Meta description' });
+  await card.getByRole('button', { name: 'Accept Meta description' }).click();
+  await card.getByRole('button', { name: 'Undo Meta description' }).click();
+  await expect(card).toContainText('Undone.');
+
+  await ask(page, 'Hello');
+  await expect(panel(page).getByRole('log')).toContainText('I see you undid my last change');
+});
+
 test('undo is refused after the block was edited again', async ({ page }) => {
   await createDocument(page, 'Scanning', BODY);
   await ask(page, 'Tighten the longest paragraph');

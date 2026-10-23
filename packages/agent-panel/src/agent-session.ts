@@ -1,10 +1,12 @@
 import { HttpAgent, type AbstractAgent, type AgentSubscriber, type Message } from '@ag-ui/client';
 import {
+  EDITOR_EVENTS_CONTEXT,
   apiErrorSchema,
   frontendToolDefinitions,
   hashBlockText,
   serverTools,
   type AgentState,
+  type EditorEvent,
   type EditorHost,
 } from '@margin/shared';
 import { canUndo, isStale, parseProposal, resultFor, type Proposal } from './proposals';
@@ -67,6 +69,8 @@ export function createAgentSession({ host, agentUrl, createAgent }: AgentSession
   let batch: string[] = [];
   const answers = new Map<string, string>();
   let invalidStreak = 0;
+  /** Things the user did that the agent cannot see in the history (undos), sent with the next run. */
+  const editorEvents: EditorEvent[] = [];
 
   const update = (patch: Partial<SessionSnapshot>) => {
     snapshot = { ...snapshot, ...patch };
@@ -115,7 +119,20 @@ export function createAgentSession({ host, agentUrl, createAgent }: AgentSession
       }
       const state: AgentState = { schema: host.getSchema(), document: host.getState() };
       agent.setState(state);
-      await agent.runAgent({ runId: newId('run'), tools: frontendToolDefinitions() }, subscriber);
+      // Editor events (undos) go along as AG-UI context; they are cleared only after a
+      // run that succeeded, so a failed run does not lose them.
+      const events = [...editorEvents];
+      await agent.runAgent(
+        {
+          runId: newId('run'),
+          tools: frontendToolDefinitions(),
+          context: events.length
+            ? [{ description: EDITOR_EVENTS_CONTEXT, value: JSON.stringify(events) }]
+            : [],
+        },
+        subscriber,
+      );
+      if (!snapshot.error) editorEvents.splice(0, events.length);
     } catch (error) {
       update({
         error:
@@ -289,6 +306,11 @@ export function createAgentSession({ host, agentUrl, createAgent }: AgentSession
           });
         }
         patch({ status: 'undone', undoError: undefined });
+        editorEvents.push(
+          proposal.kind === 'field'
+            ? { type: 'undo-field', field: proposal.field }
+            : { type: 'undo-block', blockId: proposal.blockId },
+        );
       } catch (error) {
         patch({ undoError: `Could not undo: ${(error as Error).message}` });
       }
