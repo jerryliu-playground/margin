@@ -1,10 +1,10 @@
 body {
   margin: 0;
-  font:
-    16px/1.5 system-ui,
-    sans-serif;
-  color: #1f2328;
-  background: #ffffff;
+  font-family: var(--app-font);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--app-color-text);
+  background: var(--app-color-bg);
 }
 .layout {
   display: grid;
@@ -32,7 +32,7 @@ body {
   justify-content: space-between;
 }
 .muted {
-  color: #57606a;
+  color: var(--app-color-text-muted);
   font-size: 14px;
 }
 .doc-list {
@@ -53,8 +53,8 @@ body {
   font: inherit;
   font-weight: 400;
   padding: 6px 8px;
-  border: 1px solid #8c959f;
-  border-radius: 6px;
+  border: 1px solid var(--app-color-border-strong);
+  border-radius: var(--app-radius);
 }
 .doc-form__actions {
   display: flex;
@@ -64,8 +64,8 @@ body {
 .body-editor {
   min-height: 240px;
   padding: 8px 12px;
-  border: 1px solid #8c959f;
-  border-radius: 6px;
+  border: 1px solid var(--app-color-border-strong);
+  border-radius: var(--app-radius);
   font-weight: 400;
 }
 .body-editor:focus-visible,
@@ -73,18 +73,30 @@ body {
 .doc-form textarea:focus-visible,
 button:focus-visible,
 a:focus-visible {
-  outline: 2px solid #0969da;
+  outline: 2px solid var(--app-color-focus);
   outline-offset: 2px;
 }
 button {
   font: inherit;
   padding: 6px 14px;
-  border: 1px solid #1f2328;
-  border-radius: 6px;
-  background: #f6f8fa;
+  border: 1px solid var(--app-color-control-border);
+  border-radius: var(--app-radius);
+  background: var(--app-color-surface-muted);
   cursor: pointer;
 }
 .body-editor img {
   max-width: 100%;
   height: auto;
+}
+/* The app themes the agent panel through its tokens, as any host would. */
+.margin-panel {
+  --margin-font: var(--app-font);
+  --margin-color-bg: var(--app-color-bg);
+  --margin-color-surface-muted: var(--app-color-surface-muted);
+  --margin-color-text: var(--app-color-text);
+  --margin-color-text-muted: var(--app-color-text-muted);
+  --margin-color-border: var(--app-color-border);
+  --margin-color-border-strong: var(--app-color-border-strong);
+  --margin-color-control-border: var(--app-color-control-border);
+  --margin-color-focus: var(--app-color-focus);
 }

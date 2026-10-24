@@ -1,0 +1,19 @@
+/*
+ * The demo app's design tokens. Raw colours belong here and nowhere else in apps/web
+ * (scripts/check-colors.mjs). The app also sets the agent panel's tokens from its own,
+ * the same way any host themes the panel.
+ */
+:root {
+  --app-font: system-ui, sans-serif;
+
+  --app-color-bg: #ffffff;
+  --app-color-surface-muted: #f6f8fa;
+  --app-color-text: #1f2328;
+  --app-color-text-muted: #57606a;
+  --app-color-border: #d0d7de;
+  --app-color-border-strong: #8c959f;
+  --app-color-control-border: #1f2328;
+  --app-color-focus: #0969da;
+
+  --app-radius: 6px;
+}

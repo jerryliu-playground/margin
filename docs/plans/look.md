@@ -18,7 +18,7 @@ Approved by the owner on 2026-10-24. One concern per commit; each commit passes 
 
 PR (`look` branch):
 
-- [ ] **L1 Design tokens**: move every colour, radius and spacing value into the two token files; no visual change. `packages/agent-panel`, `apps/web`.
+- [x] **L1 Design tokens**: move every colour, radius and font value into the two token files, and map the app's tokens into the panel's; no visual change. Spacing moves to tokens with the redesign in L3–L4. `packages/agent-panel`, `apps/web`.
 - [ ] **L2 Colour check**: `scripts/check-colors.mjs` in `pnpm lint`, with a message that says which token file to use; CLAUDE.md commands updated. Root.
 - [ ] **L3 Editor page**: top bar (app name, link to all documents, save state), fields grouped into "Content" and "Search and sharing", a reading-width body in a serif face, primary Save button. `apps/web`.
 - [ ] **L4 Panel**: message bubbles, the message box pinned at the bottom of the panel, cards with a status badge, a primary Accept button and secondary Reject/Undo. `packages/agent-panel`.
