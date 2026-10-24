@@ -30,7 +30,7 @@ Approved by the owner on 2026-10-24, with decisions 2a and 5a below. One concern
 5. **Fields come from the content type.** The mapping is: `string` becomes text, `text` becomes textarea, `uid` becomes slug, and `maxLength` comes from the schema. The plugin's config says which content types get the panel, and which field is the body. Tags are left out for now, because Strapi tags are usually relations.
 6. **The unstable Strapi APIs live in one file** (`plugins/strapi/admin/src/strapi-form.ts`), and the Strapi version is pinned. A Strapi upgrade that breaks them breaks one file, and the e2e job catches it.
 7. **(2a) Tokens say who asked.** The token payload gains `iss` (`"demo"` or `"strapi"`) and `sub` (the Strapi admin's id; empty in the demo), for logs and later per-user limits. The format stays HMAC-signed and short-lived; asymmetric keys wait until more than one CMS shares a server.
-8. **(5a) One level of components.** Many Strapi projects keep SEO fields in a single (non-repeatable) component such as `seo`. Fields inside one are exposed as `seo.metaDescription`, labelled "SEO › Meta description". The example project stores the meta description that way, so the e2e test covers it. A unit test first proves that `onChange` accepts the dotted path; if not, the host replaces the whole `seo` object.
+8. **(5a) One level of components.** Many Strapi projects keep SEO fields in a single (non-repeatable) component such as `seo`. Fields inside one are exposed as `seo.metaDescription`, labelled "SEO › Meta description". The example project stores the meta description that way, so the e2e test covers it. The host replaces the whole `seo` object through `onChange('seo', …)`, which Strapi supports for top-level names, so it does not depend on the undocumented dotted path.
 
 ## Steps
 
@@ -41,7 +41,7 @@ PR A (`phase-4` branch): fields.
 - [x] **P4.2 CORS for CMS admins**: `CMS_ORIGINS` (a comma-separated allowlist, empty by default) added to the agent routes' CORS. `apps/server`.
 - [x] **P4.3 Example Strapi project**: `examples/strapi` with the Article type, SQLite, an `seo` component (metaTitle, metaDescription), a seed article and a local test admin from env; a `pnpm dev:strapi` script; Strapi versions pinned in ADR 0007. `examples/strapi`.
 - [x] **P4.4 Plugin skeleton**: `plugins/strapi` (via `@strapi/sdk-plugin`), the `POST /margin/token` admin route, and an empty side panel; unit test for the route. `plugins/strapi`.
-- [ ] **P4.5 Strapi `EditorHost` for fields**: schema mapping (pure, tested), a bridge from `useForm` values to `getState`/`subscribe`, and `applyFieldValue` through `onChange`; the agent panel in the side panel. The body is empty for now. `plugins/strapi`.
+- [x] **P4.5 Strapi `EditorHost` for fields**: schema mapping (pure, tested), a bridge from `useForm` values to `getState`/`subscribe`, and `applyFieldValue` through `onChange`; the agent panel in the side panel. The body is empty for now. `plugins/strapi`.
 - [ ] **P4.6 Strapi end-to-end test**: ask for a meta description, Accept, Save, and check the entry's value through the Strapi API; axe on the panel. `playwright.strapi.config.ts`, `pnpm e2e:strapi`, CI job. Docs: README section, architecture.md, CLAUDE.md commands.
 
 PR B: the Blocks body.
