@@ -63,6 +63,7 @@ On a branch, through a pull request. CI runs `pnpm check`, and the AI review (`.
 ## Harness upkeep
 
 - If you make the same kind of mistake twice, or the user corrects the same thing twice, add an entry to `docs/harness-log.md` and propose a guide (rule, doc, skill) or a sensor (lint rule, test, check) that prevents it.
+- Change existing files from their current text: read, then edit. Prettier reflows code, so a replacement written from memory misses (harness log, 2026-10-24).
 - When a check fails, read its message fully before changing code. If a custom check's message was not enough to fix the problem, improve the message.
 
 ## Style
