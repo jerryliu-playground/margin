@@ -17,56 +17,60 @@ async function tabTo(
   await expect(target).toBeFocused();
 }
 
-test.describe('axe on every screen', () => {
-  test('document list', async ({ page }) => {
-    await page.goto('/');
-    await expect(page.getByRole('link', { name: 'Writing for the web' })).toBeVisible();
-    await expectNoAxeViolations(page);
+for (const colorScheme of ['light', 'dark'] as const) {
+  test.describe(`axe on every screen (${colorScheme})`, () => {
+    test.use({ colorScheme });
+
+    test('document list', async ({ page }) => {
+      await page.goto('/');
+      await expect(page.getByRole('link', { name: 'Writing for the web' })).toBeVisible();
+      await expectNoAxeViolations(page);
+    });
+
+    test('page not found', async ({ page }) => {
+      await page.goto('/#/nowhere');
+      await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible();
+      await expectNoAxeViolations(page);
+    });
+
+    test('editor with check results and every card state', async ({ page }) => {
+      await createDocument(page, 'Scanning', BODY);
+      await expectNoAxeViolations(page);
+
+      // Check results in the conversation.
+      await ask(page, 'Check SEO');
+      const meta = panel(page).getByRole('article', { name: 'Meta description' });
+      await expect(meta).toBeVisible();
+      await expectNoAxeViolations(page); // pending
+      await meta.getByRole('button', { name: 'Accept Meta description' }).click();
+      await expect(meta).toContainText('Accepted');
+      await expectNoAxeViolations(page); // accepted
+      await meta.getByRole('button', { name: 'Undo Meta description' }).click();
+      await expect(meta).toContainText('Undone');
+      await expectNoAxeViolations(page); // undone
+
+      await ask(page, 'Suggest a title and tags');
+      const title = panel(page).getByRole('article', { name: 'Title' });
+      await title.getByRole('button', { name: 'Reject Title' }).click();
+      await expect(title).toContainText('Rejected');
+      await panel(page)
+        .getByRole('article', { name: 'Tags' })
+        .getByRole('button', { name: 'Reject Tags' })
+        .click();
+      await expectNoAxeViolations(page); // rejected
+
+      await ask(page, 'Tighten the longest paragraph');
+      const edit = panel(page).getByRole('article', { name: 'Body edit' });
+      await expect(edit).toBeVisible();
+      const body = page.getByRole('textbox', { name: 'Body' });
+      await body.click();
+      await page.keyboard.press('End');
+      await page.keyboard.type(' More.');
+      await expect(edit.getByRole('alert')).toContainText('can no longer be applied');
+      await expectNoAxeViolations(page); // outdated
+    });
   });
-
-  test('page not found', async ({ page }) => {
-    await page.goto('/#/nowhere');
-    await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible();
-    await expectNoAxeViolations(page);
-  });
-
-  test('editor with check results and every card state', async ({ page }) => {
-    await createDocument(page, 'Scanning', BODY);
-    await expectNoAxeViolations(page);
-
-    // Check results in the conversation.
-    await ask(page, 'Check SEO');
-    const meta = panel(page).getByRole('article', { name: 'Meta description' });
-    await expect(meta).toBeVisible();
-    await expectNoAxeViolations(page); // pending
-    await meta.getByRole('button', { name: 'Accept Meta description' }).click();
-    await expect(meta).toContainText('Accepted');
-    await expectNoAxeViolations(page); // accepted
-    await meta.getByRole('button', { name: 'Undo Meta description' }).click();
-    await expect(meta).toContainText('Undone');
-    await expectNoAxeViolations(page); // undone
-
-    await ask(page, 'Suggest a title and tags');
-    const title = panel(page).getByRole('article', { name: 'Title' });
-    await title.getByRole('button', { name: 'Reject Title' }).click();
-    await expect(title).toContainText('Rejected');
-    await panel(page)
-      .getByRole('article', { name: 'Tags' })
-      .getByRole('button', { name: 'Reject Tags' })
-      .click();
-    await expectNoAxeViolations(page); // rejected
-
-    await ask(page, 'Tighten the longest paragraph');
-    const edit = panel(page).getByRole('article', { name: 'Body edit' });
-    await expect(edit).toBeVisible();
-    const body = page.getByRole('textbox', { name: 'Body' });
-    await body.click();
-    await page.keyboard.press('End');
-    await page.keyboard.type(' More.');
-    await expect(edit.getByRole('alert')).toContainText('can no longer be applied');
-    await expectNoAxeViolations(page); // outdated
-  });
-});
+}
 
 test('the whole proposal flow works with the keyboard alone', async ({ page }) => {
   await createDocument(page, 'Scanning', BODY);

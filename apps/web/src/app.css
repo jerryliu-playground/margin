@@ -318,4 +318,12 @@ a:focus-visible {
   --margin-color-border-strong: var(--app-color-border-strong);
   --margin-color-control-border: var(--app-color-control-border);
   --margin-color-focus: var(--app-color-focus);
+  --margin-color-success: var(--app-color-success);
+  --margin-color-success-soft: var(--app-color-success-soft);
+  --margin-color-warning: var(--app-color-warning);
+  --margin-color-danger: var(--app-color-danger);
+  --margin-color-del-bg: var(--app-color-del-bg);
+  --margin-color-del-text: var(--app-color-del-text);
+  --margin-color-ins-bg: var(--app-color-ins-bg);
+  --margin-color-ins-text: var(--app-color-ins-text);
 }
