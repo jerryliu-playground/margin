@@ -34,6 +34,14 @@ export function resetToSeed(repo: DocumentRepository): void {
   seedIfEmpty(repo);
 }
 
+/**
+ * The day to treat as already reset when the server starts. Starting up resets nothing
+ * (the volume keeps visitors' documents), so a start before the hour leaves today's reset due.
+ */
+export function initialResetDay(now: Date, hour: number): string {
+  return now.getUTCHours() >= hour ? now.toISOString().slice(0, 10) : '';
+}
+
 /** Checks every 10 minutes; returns a stop function for app shutdown. */
 export function scheduleNightlyReset(
   repo: DocumentRepository,
@@ -41,8 +49,7 @@ export function scheduleNightlyReset(
   onReset: () => void,
   now: () => Date = () => new Date(),
 ): () => void {
-  // Starting up counts as today's reset: the seed is already there.
-  let lastResetDay = now().toISOString().slice(0, 10);
+  let lastResetDay = initialResetDay(now(), hour);
   const timer = setInterval(
     () => {
       if (!shouldReset(now(), lastResetDay, hour)) return;
