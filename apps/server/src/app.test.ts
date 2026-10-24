@@ -2,7 +2,9 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { createTokenService } from '@margin/agent-token';
 import { loadConfig } from './config';
+import { testRequest } from './testing/test-request';
 import { testApp } from './testing/test-app';
 
 describe('server', () => {
@@ -29,6 +31,47 @@ describe('server', () => {
     expect(ok.headers['access-control-allow-origin']).toBe('http://localhost:5173');
     expect(other.headers['access-control-allow-origin']).toBeUndefined();
     await app.close();
+  });
+
+  it('allows CMS origins for /agent only', async () => {
+    const app = await testApp({ CMS_ORIGINS: 'http://localhost:1337, http://cms.test' });
+    const preflight = (url: string) =>
+      app.inject({
+        method: 'OPTIONS',
+        url,
+        headers: {
+          origin: 'http://localhost:1337',
+          'access-control-request-method': 'POST',
+          'access-control-request-headers': 'authorization,content-type',
+        },
+      });
+    expect((await preflight('/agent')).headers['access-control-allow-origin']).toBe(
+      'http://localhost:1337',
+    );
+    expect((await preflight('/documents')).headers['access-control-allow-origin']).toBeUndefined();
+    await app.close();
+  });
+
+  it('lets a CMS token run the agent but not read documents', async () => {
+    const secret = 's'.repeat(32);
+    const app = await testApp({ MARGIN_TOKEN_SECRET: secret });
+    const { token } = createTokenService(secret).issue({ iss: 'strapi', sub: '1' });
+    const headers = { authorization: `Bearer ${token}` };
+    const docs = await app.inject({ method: 'GET', url: '/documents', headers });
+    expect(docs.statusCode).toBe(403);
+    expect(docs.json()).toMatchObject({ error: { code: 'forbidden' } });
+    const agent = await app.inject({
+      method: 'POST',
+      url: '/agent',
+      headers: { ...headers, accept: 'text/event-stream' },
+      payload: testRequest([{ id: 'u1', role: 'user', content: 'Hello' }]),
+    });
+    expect(agent.statusCode).toBe(200);
+    await app.close();
+  });
+
+  it('rejects a malformed CMS_ORIGINS', () => {
+    expect(() => loadConfig({ CMS_ORIGINS: 'not a url' })).toThrow(/CMS_ORIGINS/);
   });
 
   it('rate-limits with a 429 in the API error shape', async () => {

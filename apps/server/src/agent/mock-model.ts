@@ -6,6 +6,7 @@ import type {
 import {
   checkResultSchema,
   editorEventsOf,
+  findField,
   proposalResultSchema,
   type AgentRunRequest,
   type BodyBlock,
@@ -92,9 +93,20 @@ function lastToolResult(
   return { toolName: part.toolName, value };
 }
 
+/** The host's name for a well-known field (Strapi keeps it in a component: seo.metaDescription). */
+function fieldName(request: AgentRunRequest, base: string): string {
+  return (
+    findField(
+      request.state.schema.map((f) => f.name),
+      base,
+    ) ?? base
+  );
+}
+
 function checkReply(toolName: string, result: CheckResult, request: AgentRunRequest): Reply {
   const calls: Call[] = [];
   const { body, fields } = request.state.document;
+  const titleField = fieldName(request, 'title');
   for (const issue of result.issues) {
     const block = body.find((b) => b.blockId === issue.blockId);
     if (issue.rule === 'image-alt-missing' && block?.type === 'image') {
@@ -109,12 +121,12 @@ function checkReply(toolName: string, result: CheckResult, request: AgentRunRequ
       });
     }
     if (issue.rule === 'meta-missing') {
-      const lead =
-        paragraphs(body)[0]?.text ?? (typeof fields.title === 'string' ? fields.title : '');
+      const title = fields[titleField];
+      const lead = paragraphs(body)[0]?.text ?? (typeof title === 'string' ? title : '');
       calls.push({
         name: 'proposeFieldValue',
         args: {
-          field: 'metaDescription',
+          field: fieldName(request, 'metaDescription'),
           value: cutAtWord(lead.replace(/[*_`]/g, ''), 155) || 'A short article.',
           reason: 'Adds the missing meta description.',
         },
@@ -161,13 +173,14 @@ export function scriptedReply(request: AgentRunRequest, prompt: LanguageModelV4P
 
   const ask = last?.role === 'user' ? last.content.toLowerCase() : '';
   const { fields, body } = request.state.document;
-  const title = typeof fields.title === 'string' ? fields.title : '';
+  const titleValue = fields[fieldName(request, 'title')];
+  const title = typeof titleValue === 'string' ? titleValue : '';
   const lead = paragraphs(body)[0]?.text ?? title;
 
   const meta: Call = {
     name: 'proposeFieldValue',
     args: {
-      field: 'metaDescription',
+      field: fieldName(request, 'metaDescription'),
       value: cutAtWord(lead.replace(/[*_`]/g, ''), 155) || 'A short article.',
       reason: 'Summarises the opening in under 160 characters.',
     },
@@ -175,7 +188,7 @@ export function scriptedReply(request: AgentRunRequest, prompt: LanguageModelV4P
   const titleCall: Call = {
     name: 'proposeFieldValue',
     args: {
-      field: 'title',
+      field: fieldName(request, 'title'),
       value: cutAtWord(title || firstSentence(lead), 60),
       reason: 'Keeps the title under 60 characters.',
     },
@@ -183,7 +196,7 @@ export function scriptedReply(request: AgentRunRequest, prompt: LanguageModelV4P
   const tagsCall: Call = {
     name: 'proposeFieldValue',
     args: {
-      field: 'tags',
+      field: fieldName(request, 'tags'),
       value: ['writing', 'web', 'style'],
       reason: 'Matches the topics in the body.',
     },

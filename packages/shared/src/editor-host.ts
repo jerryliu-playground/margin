@@ -34,6 +34,19 @@ export const bodyBlockSchema = bodyBlockContentSchema.extend({
 });
 export type BodyBlock = z.infer<typeof bodyBlockSchema>;
 
+/**
+ * The host's name for a well-known field: `base` itself, or a field inside a component
+ * ending in `.${base}` (Strapi's `seo.metaDescription`, ADR 0010). Undefined if absent.
+ */
+export function findField(names: Iterable<string>, base: string): string | undefined {
+  let nested: string | undefined;
+  for (const name of names) {
+    if (name === base) return name;
+    if (nested === undefined && name.endsWith(`.${base}`)) nested = name;
+  }
+  return nested;
+}
+
 /** What the agent sees: field values plus the body. Sent as AG-UI shared state. */
 export const documentStateSchema = z.object({
   fields: z.record(fieldNameSchema, fieldValueSchema),

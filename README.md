@@ -12,7 +12,7 @@ The second goal of the project is the way it was built: end to end by a coding a
 - **Checks on the server.** `a11yCheck` (skipped heading levels, empty headings, vague link text, images without alt) and `seoCheck` (title and meta description length, slug, subheadings, keyword) run on the server; the agent reads the result and proposes fixes in the same run.
 - **Batch review and tone presets.** Accept all / Reject all when a turn has several proposals; More formal / Shorter / Friendlier in one click.
 - **Accessible.** Keyboard-only flow, focus moves to the next card or the message box, a live status line announces new proposals, axe passes on every screen and card state, in light and dark mode.
-- **Host-agnostic panel.** The panel only knows an `EditorHost` interface, so the same panel can later run in a Strapi 5 admin plugin or a Gutenberg sidebar. Its look comes from CSS tokens a host can override, which is how the demo app gives it dark mode.
+- **Host-agnostic panel, now in Strapi.** The panel only knows an `EditorHost` interface. `plugins/strapi` puts the same panel into the Strapi 5 Content Manager: it proposes field values, including fields inside a component such as `seo.metaDescription`, and Strapi's Save button stays in charge. A Gutenberg sidebar can follow the same way. Its look comes from CSS tokens a host can override, which is how the demo app gives it dark mode.
 
 ## Architecture
 
@@ -80,6 +80,8 @@ pnpm check      # typecheck, lint, format check, unit tests, e2e
 ```
 
 The server reads `apps/server/.env` in dev (see [`.env.example`](.env.example)). Without `MARGIN_MODEL=anthropic` and an `ANTHROPIC_API_KEY` it uses the scripted mock model, so everything works offline.
+
+**Strapi:** `pnpm dev:strapi` starts the example project in `examples/strapi` with the plugin (see [`plugins/strapi/README.md`](plugins/strapi/README.md)). The plugin and the Margin server share `MARGIN_TOKEN_SECRET`, and the server lists the Strapi admin in `CMS_ORIGINS`.
 
 Deploying: [`docs/deploy.md`](docs/deploy.md) (Fly.io, one always-on machine, about $4/month). Demo video script: [`docs/demo-script.md`](docs/demo-script.md).
 

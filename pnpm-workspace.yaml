@@ -1,5 +1,10 @@
 packages:
   - apps/*
   - packages/*
+  - plugins/*
+  - examples/*
 allowBuilds:
   esbuild: true
+  # Strapi (ADR 0010): their postinstall scripts only check a prebuilt binary or print a banner.
+  '@swc/core': false
+  core-js-pure: false

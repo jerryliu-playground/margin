@@ -13,7 +13,7 @@ A rich-text content editor with an AI agent in a side panel. The agent talks to 
 - `apps/server`: Node + Fastify, AI SDK agent (`ai` + `@ai-sdk/anthropic`) behind our own AG-UI adapter, REST for documents, SQLite (better-sqlite3 + Drizzle)
 - `packages/agent-panel`: host-agnostic React panel on the raw `@ag-ui/client` SDK (no CopilotKit)
 - `packages/shared`: types, zod schemas, pure helpers
-- Decisions and pinned versions: `docs/adr/` (0001–0009); deploying: `docs/deploy.md`
+- Decisions and pinned versions: `docs/adr/` (0001–0010); deploying: `docs/deploy.md`
 - Tests: Vitest, Playwright, axe-core · Lint: ESLint + typescript-eslint · Format: Prettier
 
 If a library's API is uncertain, check its current documentation instead of guessing. Record any new dependency in an ADR.
@@ -23,12 +23,14 @@ If a library's API is uncertain, check its current documentation instead of gues
 ```bash
 pnpm install
 pnpm dev          # web + server; the server reads apps/server/.env (e2e never does)
+pnpm dev:strapi   # the example Strapi project (examples/strapi) at http://localhost:1337/admin
 pnpm check        # typecheck + lint + format check + unit tests + e2e (must pass before you say a task is done)
 pnpm typecheck    # tsc --noEmit in every package
 pnpm lint         # ESLint (includes boundary rules) + raw colour check (scripts/check-colors.mjs)
 pnpm format       # Prettier write (pnpm format:check to verify)
 pnpm test         # unit tests (Vitest)
 pnpm e2e          # Playwright (builds web, starts web + server with a mocked model)
+pnpm e2e:strapi   # Playwright against the example Strapi with the plugin (slow; own CI job, not in check)
 pnpm --filter @margin/server db:generate   # new SQL migration after editing apps/server/src/db/schema.ts
 docker build -t margin .                    # production image (CI builds and smoke-tests it)
 ```

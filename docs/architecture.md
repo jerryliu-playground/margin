@@ -12,12 +12,15 @@ apps/web ──────────► packages/agent-panel ──► packag
                                   (Fastify, agent, SQLite)
 ```
 
-| Package                | May import                       | Must never import                                                                |
-| ---------------------- | -------------------------------- | -------------------------------------------------------------------------------- |
-| `packages/shared`      | `zod`                            | anything in `apps/*` or `packages/agent-panel`; any I/O (`node:fs`, `fetch`, DB) |
-| `packages/agent-panel` | `shared`, React, `@ag-ui/client` | `@tiptap/*`, Strapi, WordPress, `apps/*`                                         |
-| `apps/web`             | `shared`, `agent-panel`, TipTap  | `apps/server`                                                                    |
-| `apps/server`          | `shared`, Fastify, AI SDK        | `apps/web`, `packages/agent-panel`                                               |
+| Package                 | May import                            | Must never import                                                                |
+| ----------------------- | ------------------------------------- | -------------------------------------------------------------------------------- |
+| `packages/agent-token`  | `node:crypto`                         | anything in `apps/*`; it must never be imported by browser code                  |
+| `packages/shared`       | `zod`                                 | anything in `apps/*` or `packages/agent-panel`; any I/O (`node:fs`, `fetch`, DB) |
+| `packages/agent-panel`  | `shared`, React, `@ag-ui/client`      | `@tiptap/*`, Strapi, WordPress, `apps/*`                                         |
+| `apps/web`              | `shared`, `agent-panel`, TipTap       | `apps/server`                                                                    |
+| `apps/server`           | `shared`, Fastify, AI SDK             | `apps/web`, `packages/agent-panel`                                               |
+| `plugins/strapi` admin  | `shared`, `agent-panel`, Strapi admin | `apps/*`, `agent-token`, its own `server/`                                       |
+| `plugins/strapi` server | `shared`, `agent-token`               | `apps/*`, `agent-panel`, its own `admin/`                                        |
 
 These rules are enforced by ESLint (`no-restricted-imports` in `eslint.config.js`). Each error message says which rule from CLAUDE.md it protects and what to do instead.
 
@@ -75,6 +78,26 @@ Approval rules the session enforces:
 - Accept all / Reject all (shown when two or more proposals are pending) answer each pending proposal through the same accept/reject path, so outdated ones become `stale` and the run continues once.
 - Undo restores the value from before the proposal, only if the field value or the block's hash is unchanged since Accept (`canUndo` in `proposals.ts`). The next run tells the agent, once, through AG-UI `context` as a structured event (see Editor context above).
 
+## Strapi plugin (plugins/strapi, ADR 0010)
+
+```
+Strapi admin (browser)                    Strapi server            Margin server
+side panel → AgentPanel + Strapi host
+  host.getAuthToken() ── POST /margin/token ─► signs a token
+                                               (iss "strapi", sub = admin id)
+  runAgent ──────────────── POST /agent (CORS: CMS_ORIGINS) ──────────────► same flow as the demo
+```
+
+| File (admin/src)  | Role                                                                                                |
+| ----------------- | --------------------------------------------------------------------------------------------------- |
+| `MarginPanel.tsx` | `addEditViewSidePanel` entry; only for content types in the plugin config                           |
+| `fields.ts`       | content type attributes → fields: text, textarea, uid, and one level of single components (`seo.…`) |
+| `strapi-host.ts`  | `EditorHost` on the form values; a component field replaces the whole component through `onChange`  |
+| `strapi-form.ts`  | the only file that imports Strapi admin hooks (`useForm`, `unstable_useContentManagerContext`)      |
+| `token.ts`        | caches agent tokens until a minute before they expire                                               |
+
+The panel renders inside Strapi's edit `<form>`, so it uses no `<form>` of its own. `examples/strapi` is the local project for development (`pnpm dev:strapi`) and for `pnpm e2e:strapi`.
+
 ## Public demo protection (apps/server/src/demo.ts)
 
 - Per-IP rate limits on every route (`@fastify/rate-limit`); behind a proxy `TRUST_PROXY=true` makes them see the real client IP.
@@ -84,6 +107,8 @@ Approval rules the session enforces:
 ## Auth
 
 The panel never holds the model key. It calls `EditorHost.getAuthToken()` and sends the token as a bearer header. The server holds the model key from environment variables (ADR 0006).
+
+Tokens are signed and checked by `packages/agent-token` (Node only, ESLint keeps it out of browser code): a 15-minute HMAC token whose claims say which host asked (`iss`) and for which user (`sub`). The demo's `POST /auth/token` issues `iss: "demo"`; a CMS backend issues its own with the same secret (ADR 0010). A token whose `iss` is not `demo` works only for `POST /agent`, and CORS allows the origins in `CMS_ORIGINS` for that route only.
 
 ## Document model
 

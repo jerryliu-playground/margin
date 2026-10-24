@@ -149,6 +149,10 @@ export function ProposalCard({
                 className="margin-panel__input"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
+                // Enter would submit the host's form if the panel sits inside one (Strapi).
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') e.preventDefault();
+                }}
               />
             </label>
           )}

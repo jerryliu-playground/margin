@@ -26,6 +26,28 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
+  strapi-e2e:
+    # The Strapi plugin against a fresh example project, with the mock model (ADR 0010).
+    # Separate from `check` because Strapi's admin build is slow.
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm e2e:strapi
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-strapi
+          path: playwright-report/
+          retention-days: 7
+
   image:
     runs-on: ubuntu-latest
     timeout-minutes: 15

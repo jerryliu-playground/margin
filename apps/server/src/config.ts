@@ -4,6 +4,20 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(8790),
   WEB_ORIGIN: z.url().default('http://localhost:5173'),
+  /**
+   * CMS admin origins whose panels may call POST /agent (ADR 0010), comma-separated,
+   * e.g. "http://localhost:1337". They get CORS for /agent only, never for documents.
+   */
+  CMS_ORIGINS: z
+    .string()
+    .default('')
+    .transform((v) =>
+      v
+        .split(',')
+        .map((o) => o.trim())
+        .filter(Boolean),
+    )
+    .pipe(z.array(z.url())),
   /** "mock" = deterministic mock model (tests, offline dev). "anthropic" = Claude. */
   MARGIN_MODEL: z.enum(['mock', 'anthropic']).default('mock'),
   ANTHROPIC_API_KEY: z.string().optional(),

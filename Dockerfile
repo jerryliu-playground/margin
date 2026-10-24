@@ -8,6 +8,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/web/package.json apps/web/
 COPY apps/server/package.json apps/server/
 COPY packages/shared/package.json packages/shared/
+COPY packages/agent-token/package.json packages/agent-token/
 COPY packages/agent-panel/package.json packages/agent-panel/
 RUN pnpm install --frozen-lockfile
 COPY . .

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { a11yCheck, checkResultSchema, seoCheck } from './checks';
-import type { BodyBlock, DocumentState } from './editor-host';
+import { findField, type BodyBlock, type DocumentState } from './editor-host';
 
 const doc = (body: BodyBlock[], fields: DocumentState['fields'] = {}): DocumentState => ({
   fields,
@@ -113,5 +113,20 @@ describe('seoCheck', () => {
 
   it('returns results that match the shared schema', () => {
     expect(checkResultSchema.safeParse(seoCheck(doc([], {}))).success).toBe(true);
+  });
+});
+
+describe('fields inside components (Strapi, ADR 0010)', () => {
+  it('findField prefers the plain name, then a component field', () => {
+    expect(findField(['title', 'seo.metaDescription'], 'metaDescription')).toBe(
+      'seo.metaDescription',
+    );
+    expect(findField(['seo.title', 'title'], 'title')).toBe('title');
+    expect(findField(['summary'], 'slug')).toBeUndefined();
+  });
+
+  it('seoCheck reads and reports the host field name', () => {
+    const result = seoCheck(doc([], { title: 'A title', slug: 'a', 'seo.metaDescription': '' }));
+    expect(result.issues.find((i) => i.rule === 'meta-missing')?.field).toBe('seo.metaDescription');
   });
 });

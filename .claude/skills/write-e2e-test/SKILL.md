@@ -51,11 +51,16 @@ The mock model (`apps/server/src/agent/mock-model.ts`) answers by keyword in the
 
 After a tool result it replies in one sentence (`Done. Save the document…`, `OK, I left it unchanged. Noted: <reason>`, …). Add a keyword there when a new flow needs a scripted answer; keep it deterministic.
 
+## Strapi plugin tests
+
+`e2e-strapi/` holds the tests of `plugins/strapi` (ADR 0010). `playwright.strapi.config.ts` starts the Margin server (mock model) and a fresh `examples/strapi` with the plugin built from source; every secret there is a local test value. Use the helpers in `e2e-strapi/helpers.ts`: `signIn` (turns Strapi's guided tour off), `createArticle` / `readArticle` through Strapi's admin API (each test owns its article), `panel`, `ask`, and `expectPanelHasNoAxeViolations` (axe on our panel only, not Strapi's admin). Strapi labels fields by attribute name (`metaDescription`); the agent's card names them `SEO › Meta description`.
+
 ## Run
 
 ```bash
 pnpm e2e                         # all
 pnpm e2e e2e/smoke.spec.ts       # one file
+pnpm e2e:strapi                  # the Strapi plugin (slow: builds Strapi's admin)
 ```
 
 On failure, open the trace that Playwright prints (`pnpm exec playwright show-trace …`) before changing code.

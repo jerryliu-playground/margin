@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { BodyBlock, DocumentState } from './editor-host';
+import { findField, type BodyBlock, type DocumentState } from './editor-host';
 
 /**
  * Server tools (SPEC §4, features 7–8). Both are pure and deterministic: they read the
@@ -173,30 +173,35 @@ const words = (s: string) => s.split(/\s+/).filter(Boolean).length;
 
 export function seoCheck(document: DocumentState, args: SeoCheckArgs = {}): CheckResult {
   const issues: CheckIssue[] = [];
-  const title = text(document.fields.title);
-  const meta = text(document.fields.metaDescription);
-  const slug = text(document.fields.slug);
+  // Hosts may keep these inside a component (seo.metaDescription); report the host's name.
+  const names = Object.keys(document.fields);
+  const titleField = findField(names, 'title') ?? 'title';
+  const metaField = findField(names, 'metaDescription') ?? 'metaDescription';
+  const slugField = findField(names, 'slug') ?? 'slug';
+  const title = text(document.fields[titleField]);
+  const meta = text(document.fields[metaField]);
+  const slug = text(document.fields[slugField]);
 
   if (!title) {
     issues.push({
       rule: 'title-missing',
       severity: 'error',
       message: 'The article has no title.',
-      field: 'title',
+      field: titleField,
     });
   } else if (title.length > SEO_LIMITS.title) {
     issues.push({
       rule: 'title-too-long',
       severity: 'warning',
       message: `The title has ${title.length} characters; search results show about ${SEO_LIMITS.title}.`,
-      field: 'title',
+      field: titleField,
     });
   } else if (title.length < SEO_LIMITS.titleMin) {
     issues.push({
       rule: 'title-too-short',
       severity: 'warning',
       message: `The title has ${title.length} characters; aim for ${SEO_LIMITS.titleMin}–${SEO_LIMITS.title}.`,
-      field: 'title',
+      field: titleField,
     });
   }
 
@@ -205,21 +210,21 @@ export function seoCheck(document: DocumentState, args: SeoCheckArgs = {}): Chec
       rule: 'meta-missing',
       severity: 'error',
       message: 'The article has no meta description.',
-      field: 'metaDescription',
+      field: metaField,
     });
   } else if (meta.length > SEO_LIMITS.metaDescription) {
     issues.push({
       rule: 'meta-too-long',
       severity: 'warning',
       message: `The meta description has ${meta.length} characters; keep it under ${SEO_LIMITS.metaDescription}.`,
-      field: 'metaDescription',
+      field: metaField,
     });
   } else if (meta.length < SEO_LIMITS.metaDescriptionMin) {
     issues.push({
       rule: 'meta-too-short',
       severity: 'warning',
       message: `The meta description has ${meta.length} characters; aim for ${SEO_LIMITS.metaDescriptionMin}–${SEO_LIMITS.metaDescription}.`,
-      field: 'metaDescription',
+      field: metaField,
     });
   }
 
@@ -228,7 +233,7 @@ export function seoCheck(document: DocumentState, args: SeoCheckArgs = {}): Chec
       rule: 'slug-missing',
       severity: 'warning',
       message: 'The article has no slug.',
-      field: 'slug',
+      field: slugField,
     });
   }
 
@@ -247,8 +252,8 @@ export function seoCheck(document: DocumentState, args: SeoCheckArgs = {}): Chec
     const has = (s: string) => s.toLowerCase().includes(keyword);
     const firstParagraph = document.body.find((b) => b.type === 'paragraph' && b.text.trim());
     const places: [string, boolean, Partial<CheckIssue>][] = [
-      ['title', has(title), { field: 'title' }],
-      ['meta description', has(meta), { field: 'metaDescription' }],
+      ['title', has(title), { field: titleField }],
+      ['meta description', has(meta), { field: metaField }],
       [
         'first paragraph',
         !!firstParagraph && has(firstParagraph.text),
