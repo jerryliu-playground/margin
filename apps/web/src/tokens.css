@@ -4,16 +4,30 @@
  * the same way any host themes the panel.
  */
 :root {
-  --app-font: system-ui, sans-serif;
+  --app-font: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --app-font-doc: 'Iowan Old Style', Charter, 'Palatino Linotype', Georgia, serif;
 
-  --app-color-bg: #ffffff;
-  --app-color-surface-muted: #f6f8fa;
-  --app-color-text: #1f2328;
-  --app-color-text-muted: #57606a;
-  --app-color-border: #d0d7de;
-  --app-color-border-strong: #8c959f;
-  --app-color-control-border: #1f2328;
-  --app-color-focus: #0969da;
+  --app-color-bg: #f7f6f2;
+  --app-color-surface: #ffffff;
+  --app-color-surface-muted: #efede7;
+  --app-color-text: #1c1b19;
+  --app-color-text-muted: #5f5b53;
+  --app-color-border: #e3e0d8;
+  --app-color-border-strong: #8a857b;
+  --app-color-control-border: #8a857b;
+  --app-color-accent: #3a46a8;
+  --app-color-accent-hover: #2e388a;
+  --app-color-on-accent: #ffffff;
+  --app-color-focus: #3a46a8;
+
+  --app-space-1: 4px;
+  --app-space-2: 8px;
+  --app-space-3: 12px;
+  --app-space-4: 16px;
+  --app-space-5: 24px;
+  --app-space-6: 32px;
 
   --app-radius: 6px;
+  --app-radius-lg: 10px;
+  --app-topbar-height: 52px;
 }

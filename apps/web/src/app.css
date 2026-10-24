@@ -6,14 +6,50 @@ body {
   color: var(--app-color-text);
   background: var(--app-color-bg);
 }
+.app {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+/* Top bar */
+.topbar {
+  display: flex;
+  align-items: center;
+  height: var(--app-topbar-height);
+  padding: 0 var(--app-space-5);
+  border-bottom: 1px solid var(--app-color-border);
+  background: var(--app-color-surface);
+}
+.topbar__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--app-space-2);
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--app-color-text);
+  text-decoration: none;
+}
+.topbar__mark {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: var(--app-color-accent);
+  /* A page with a margin rule: the product's mark. */
+  box-shadow: inset 5px 0 0 var(--app-color-accent-hover);
+}
+
+/* Page layout: the editor, and the agent panel beside it. */
 .layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 380px;
-  min-height: 100vh;
+  min-width: 0;
 }
 .page {
-  max-width: 760px;
-  padding: 24px 32px;
+  width: 100%;
+  max-width: 780px;
+  margin: 0 auto;
+  padding: var(--app-space-5) var(--app-space-6) var(--app-space-6);
   box-sizing: border-box;
   min-width: 0;
 }
@@ -23,50 +59,169 @@ body {
     grid-template-columns: minmax(0, 1fr);
   }
   .page {
-    padding: 16px;
+    padding: var(--app-space-4);
   }
+  .topbar {
+    padding: 0 var(--app-space-4);
+  }
+}
+h1 {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.25;
 }
 .page__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--app-space-4);
+  margin-bottom: var(--app-space-5);
 }
 .muted {
   color: var(--app-color-text-muted);
   font-size: 14px;
 }
+a {
+  color: var(--app-color-accent);
+}
 .doc-list {
   padding-left: 20px;
 }
+
+/* Document editor */
 .doc-form {
   display: grid;
-  gap: 16px;
+  gap: var(--app-space-5);
+}
+.doc-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--app-space-4);
+  margin: calc(-1 * var(--app-space-5)) calc(-1 * var(--app-space-2)) 0;
+  padding: var(--app-space-5) var(--app-space-2) var(--app-space-3);
+  background: var(--app-color-bg);
+  border-bottom: 1px solid var(--app-color-border);
+}
+.doc-header__title {
+  display: grid;
+  gap: var(--app-space-1);
+  min-width: 0;
+}
+.doc-header__title h1 {
+  font-family: var(--app-font-doc);
+  overflow-wrap: anywhere;
+}
+.doc-header__back {
+  font-size: 14px;
+  text-decoration: none;
+}
+.doc-header__back:hover {
+  text-decoration: underline;
+}
+.doc-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--app-space-3);
+  flex-shrink: 0;
+}
+.doc-section {
+  display: grid;
+  gap: var(--app-space-4);
+  margin: 0;
+  padding: var(--app-space-4) var(--app-space-5) var(--app-space-5);
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-lg);
+  background: var(--app-color-surface);
+  min-width: 0;
+}
+.doc-section legend {
+  padding: 0 var(--app-space-2);
+  margin-left: calc(-1 * var(--app-space-2));
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--app-color-text-muted);
 }
 .doc-form label,
 .doc-form__body {
   display: grid;
-  gap: 4px;
+  gap: var(--app-space-1);
+  font-size: 14px;
   font-weight: 600;
 }
 .doc-form input,
 .doc-form textarea {
   font: inherit;
+  font-size: 16px;
   font-weight: 400;
-  padding: 6px 8px;
-  border: 1px solid var(--app-color-border-strong);
+  padding: var(--app-space-2) 10px;
+  color: var(--app-color-text);
+  background: var(--app-color-surface);
+  border: 1px solid var(--app-color-control-border);
   border-radius: var(--app-radius);
 }
-.doc-form__actions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
+.doc-form textarea {
+  resize: vertical;
+}
+.doc-form .muted {
+  font-weight: 400;
 }
 .body-editor {
-  min-height: 240px;
-  padding: 8px 12px;
-  border: 1px solid var(--app-color-border-strong);
-  border-radius: var(--app-radius);
+  min-height: 320px;
+  padding: var(--app-space-4) 20px;
+  font-family: var(--app-font-doc);
+  font-size: 18px;
+  line-height: 1.65;
   font-weight: 400;
+  color: var(--app-color-text);
+  background: var(--app-color-surface);
+  border: 1px solid var(--app-color-control-border);
+  border-radius: var(--app-radius);
+}
+.body-editor > :first-child {
+  margin-top: 0;
+}
+.body-editor h2,
+.body-editor h3 {
+  line-height: 1.3;
+}
+.body-editor img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--app-radius);
+}
+
+/* Controls */
+button {
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 7px 16px;
+  color: var(--app-color-text);
+  background: var(--app-color-surface);
+  border: 1px solid var(--app-color-control-border);
+  border-radius: var(--app-radius);
+  cursor: pointer;
+}
+button:hover:not(:disabled) {
+  background: var(--app-color-surface-muted);
+}
+button:disabled {
+  cursor: not-allowed;
+  color: var(--app-color-text-muted);
+}
+.button--primary {
+  color: var(--app-color-on-accent);
+  background: var(--app-color-accent);
+  border-color: var(--app-color-accent);
+}
+.button--primary:hover:not(:disabled) {
+  background: var(--app-color-accent-hover);
 }
 .body-editor:focus-visible,
 .doc-form input:focus-visible,
@@ -76,22 +231,22 @@ a:focus-visible {
   outline: 2px solid var(--app-color-focus);
   outline-offset: 2px;
 }
-button {
-  font: inherit;
-  padding: 6px 14px;
-  border: 1px solid var(--app-color-control-border);
-  border-radius: var(--app-radius);
-  background: var(--app-color-surface-muted);
-  cursor: pointer;
+
+/* Narrow screens: tighter header to match the page padding. */
+@media (max-width: 900px) {
+  h1 {
+    font-size: 22px;
+  }
+  .doc-header {
+    margin-top: calc(-1 * var(--app-space-4));
+    padding-top: var(--app-space-4);
+  }
 }
-.body-editor img {
-  max-width: 100%;
-  height: auto;
-}
+
 /* The app themes the agent panel through its tokens, as any host would. */
 .margin-panel {
   --margin-font: var(--app-font);
-  --margin-color-bg: var(--app-color-bg);
+  --margin-color-bg: var(--app-color-surface);
   --margin-color-surface-muted: var(--app-color-surface-muted);
   --margin-color-text: var(--app-color-text);
   --margin-color-text-muted: var(--app-color-text-muted);

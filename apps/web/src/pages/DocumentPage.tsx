@@ -120,10 +120,6 @@ function DocumentEditor({ doc }: { doc: Document }) {
   return (
     <div className="layout">
       <main className="page">
-        <p>
-          <a href="#/">All documents</a>
-        </p>
-        <h1>{text(values.title) || 'Untitled'}</h1>
         <form
           className="doc-form"
           onSubmit={(e) => {
@@ -131,51 +127,67 @@ function DocumentEditor({ doc }: { doc: Document }) {
             void save();
           }}
         >
-          <label>
-            Title
-            {input('title')}
-          </label>
-          <label>
-            Slug
-            {input('slug')}
-          </label>
-          <label>
-            Summary
-            {textarea('summary')}
-          </label>
-          <label>
-            Meta description
-            {textarea('metaDescription')}
-          </label>
-          <label>
-            Tags
-            <input
-              ref={tagsRef}
-              defaultValue={doc.tags.join(', ')}
-              aria-describedby={tagsHintId}
-              onChange={(e) => store.set('tags', parseTags(e.target.value))}
-            />
-            <span id={tagsHintId} className="muted">
-              Separate tags with commas.
-            </span>
-          </label>
-          <div className="doc-form__body">
-            <span id={bodyLabelId} className="label">
-              Body
-            </span>
-            <BodyEditor
-              initialContent={doc.body}
-              labelledBy={bodyLabelId}
-              onReady={onEditorReady}
-              onChange={onBodyChange}
-            />
+          <div className="doc-header">
+            <div className="doc-header__title">
+              <a href="#/" className="doc-header__back">
+                All documents
+              </a>
+              <h1>{text(values.title) || 'Untitled'}</h1>
+            </div>
+            <div className="doc-header__actions">
+              <span role="status" className="muted">
+                {status || (dirty ? 'Unsaved changes' : '')}
+              </span>
+              <button type="submit" className="button--primary">
+                Save
+              </button>
+            </div>
           </div>
-          <div className="doc-form__actions">
-            <button type="submit">Save</button>
-            <span role="status" className="muted">
-              {status || (dirty ? 'Unsaved changes' : '')}
-            </span>
-          </div>
+          <fieldset className="doc-section">
+            <legend>Content</legend>
+            <label>
+              Title
+              {input('title')}
+            </label>
+            <label>
+              Summary
+              {textarea('summary')}
+            </label>
+            <div className="doc-form__body">
+              <span id={bodyLabelId} className="label">
+                Body
+              </span>
+              <BodyEditor
+                initialContent={doc.body}
+                labelledBy={bodyLabelId}
+                onReady={onEditorReady}
+                onChange={onBodyChange}
+              />
+            </div>
+          </fieldset>
+          <fieldset className="doc-section">
+            <legend>Search and sharing</legend>
+            <label>
+              Slug
+              {input('slug')}
+            </label>
+            <label>
+              Meta description
+              {textarea('metaDescription')}
+            </label>
+            <label>
+              Tags
+              <input
+                ref={tagsRef}
+                defaultValue={doc.tags.join(', ')}
+                aria-describedby={tagsHintId}
+                onChange={(e) => store.set('tags', parseTags(e.target.value))}
+              />
+              <span id={tagsHintId} className="muted">
+                Separate tags with commas.
+              </span>
+            </label>
+          </fieldset>
         </form>
       </main>
       {host && <AgentPanel host={host} agentUrl={AGENT_URL} />}
