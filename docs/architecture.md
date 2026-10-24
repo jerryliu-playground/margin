@@ -88,13 +88,14 @@ side panel → AgentPanel + Strapi host
   runAgent ──────────────── POST /agent (CORS: CMS_ORIGINS) ──────────────► same flow as the demo
 ```
 
-| File (admin/src)  | Role                                                                                                |
-| ----------------- | --------------------------------------------------------------------------------------------------- |
-| `MarginPanel.tsx` | `addEditViewSidePanel` entry; only for content types in the plugin config                           |
-| `fields.ts`       | content type attributes → fields: text, textarea, uid, and one level of single components (`seo.…`) |
-| `strapi-host.ts`  | `EditorHost` on the form values; a component field replaces the whole component through `onChange`  |
-| `strapi-form.ts`  | the only file that imports Strapi admin hooks (`useForm`, `unstable_useContentManagerContext`)      |
-| `token.ts`        | caches agent tokens until a minute before they expire                                               |
+| File (admin/src)  | Role                                                                                                              |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `MarginPanel.tsx` | `addEditViewSidePanel` entry; only for content types in the plugin config                                         |
+| `blocks.ts`       | Blocks ⇄ host-neutral body: inline Markdown, whole-Markdown lists/quotes/code, images as `![alt](url)` (alt only) |
+| `fields.ts`       | content type attributes → fields: text, textarea, uid, and one level of single components (`seo.…`)               |
+| `strapi-host.ts`  | `EditorHost` on the form values; a component field replaces the whole component through `onChange`                |
+| `strapi-form.ts`  | the only file that imports Strapi admin hooks (`useForm`, `unstable_useContentManagerContext`)                    |
+| `token.ts`        | caches agent tokens until a minute before they expire                                                             |
 
 The panel renders inside Strapi's edit `<form>`, so it uses no `<form>` of its own. `examples/strapi` is the local project for development (`pnpm dev:strapi`) and for `pnpm e2e:strapi`.
 
