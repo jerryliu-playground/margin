@@ -4,14 +4,19 @@ import { ADMIN } from '../playwright.strapi.config';
 
 const ARTICLES = '/content-manager/collection-types/api::article.article';
 
-/** Signs in to the Strapi admin with the guided tour switched off. */
-export async function signIn(page: Page): Promise<void> {
+/** Switches Strapi's guided tour off, so it never covers the page. */
+export async function hideGuidedTour(page: Page): Promise<void> {
   await page.addInitScript(() => {
     localStorage.setItem(
       'STRAPI_GUIDED_TOUR',
       JSON.stringify({ tours: {}, enabled: false, hidden: true, completedActions: [] }),
     );
   });
+}
+
+/** Signs in through the login page (once, in auth.setup.ts). */
+export async function signIn(page: Page): Promise<void> {
+  await hideGuidedTour(page);
   await page.goto('/admin/auth/login');
   await page.getByRole('textbox', { name: 'Email' }).fill(ADMIN.email);
   await page.getByRole('textbox', { name: 'Password' }).fill(ADMIN.password);
@@ -32,8 +37,31 @@ function adminToken(request: APIRequestContext): Promise<string> {
 
 export interface ArticleData {
   title: string;
-  paragraph: string;
+  paragraphs: string[];
+  /** Adds an image block without alt text (a media file record; the file need not exist). */
+  image?: boolean;
 }
+
+export const IMAGE_URL = '/uploads/reading-time.png';
+
+const imageBlock = {
+  type: 'image',
+  image: {
+    name: 'reading-time.png',
+    url: IMAGE_URL,
+    alternativeText: null,
+    width: 800,
+    height: 400,
+    hash: 'reading_time',
+    ext: '.png',
+    mime: 'image/png',
+    size: 12.3,
+    provider: 'local',
+    createdAt: '2026-10-24T00:00:00.000Z',
+    updatedAt: '2026-10-24T00:00:00.000Z',
+  },
+  children: [{ type: 'text', text: '' }],
+};
 
 /** Creates an article through Strapi's admin API, so each test owns its data. */
 export async function createArticle(
@@ -46,22 +74,41 @@ export async function createArticle(
     data: {
       title: data.title,
       seo: { metaTitle: '', metaDescription: '' },
-      body: [{ type: 'paragraph', children: [{ type: 'text', text: data.paragraph }] }],
+      body: [
+        ...data.paragraphs.map((text) => ({
+          type: 'paragraph',
+          children: [{ type: 'text', text }],
+        })),
+        ...(data.image ? [imageBlock] : []),
+      ],
     },
   });
   expect(res.ok(), await res.text()).toBe(true);
   return ((await res.json()) as { data: { documentId: string } }).data.documentId;
 }
 
+export interface StoredArticle {
+  seo: { metaDescription: string | null } | null;
+  body: {
+    type: string;
+    children?: { text?: string }[];
+    image?: { url: string; alternativeText: string | null };
+  }[];
+}
+
 /** The stored article, as the Strapi admin API returns it. */
 export async function readArticle(
   request: APIRequestContext,
   documentId: string,
-): Promise<{ seo: { metaDescription: string | null } | null }> {
+): Promise<StoredArticle> {
   const headers = { authorization: `Bearer ${await adminToken(request)}` };
   const res = await request.get(`${ARTICLES}/${documentId}`, { headers });
-  return ((await res.json()) as { data: { seo: { metaDescription: string | null } | null } }).data;
+  return ((await res.json()) as { data: StoredArticle }).data;
 }
+
+/** The plain text of a stored paragraph. */
+export const paragraphText = (article: StoredArticle, index: number): string =>
+  (article.body[index]?.children ?? []).map((c) => c.text ?? '').join('');
 
 export function editUrl(documentId: string): string {
   return `/admin${ARTICLES}/${documentId}`;

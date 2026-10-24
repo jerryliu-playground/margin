@@ -161,11 +161,12 @@ Phases are ordered by dependency, not by calendar. The original week estimates a
 - Deployed demo, README with the harness write-up.
 - The 2–3 minute video moved to after Phase 4 (owner, 2026-10-22), so it can show the panel in the demo app and in Strapi.
 
-**Phase 4 — Strapi plugin (after the showcase)**
+**Phase 4 — Strapi plugin** (done 2026-10-24)
 
 - A Strapi 5 plugin that adds the agent panel to the Content Manager edit view, implementing `EditorHost` on top of Strapi's form state.
 - Done when: in a local Strapi project with a sample content type, the agent proposes a meta description, the editor accepts it, and the Strapi entry shows the new value after saving.
-- Then: record the 2–3 minute video (`docs/demo-script.md`, updated with a Strapi segment).
+- Also: the agent sees and edits the Blocks body, including image alt text (`pnpm e2e:strapi`).
+- Then: record the video (`docs/demo-script.md`, with a Strapi segment). Owner.
 
 **Phase 5 — WordPress plugin (optional)**
 

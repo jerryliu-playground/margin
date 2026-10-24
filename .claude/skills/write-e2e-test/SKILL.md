@@ -53,7 +53,7 @@ After a tool result it replies in one sentence (`Done. Save the document…`, `O
 
 ## Strapi plugin tests
 
-`e2e-strapi/` holds the tests of `plugins/strapi` (ADR 0010). `playwright.strapi.config.ts` starts the Margin server (mock model) and a fresh `examples/strapi` with the plugin built from source; every secret there is a local test value. Use the helpers in `e2e-strapi/helpers.ts`: `signIn` (turns Strapi's guided tour off), `createArticle` / `readArticle` through Strapi's admin API (each test owns its article), `panel`, `ask`, and `expectPanelHasNoAxeViolations` (axe on our panel only, not Strapi's admin). Strapi labels fields by attribute name (`metaDescription`); the agent's card names them `SEO › Meta description`.
+`e2e-strapi/` holds the tests of `plugins/strapi` (ADR 0010). `playwright.strapi.config.ts` starts the Margin server (mock model) and a fresh `examples/strapi` with the plugin built from source; every secret there is a local test value. `auth.setup.ts` signs in once and saves the session for every test (Strapi rate-limits admin logins; the suite runs on one worker). In tests use the helpers in `e2e-strapi/helpers.ts`: `hideGuidedTour` in `beforeEach`, `createArticle` (paragraphs, optionally an image without alt text) / `readArticle` / `paragraphText` through Strapi's admin API (each test owns its article), `panel`, `ask`, and `expectPanelHasNoAxeViolations` (axe on our panel only, not Strapi's admin). Strapi labels fields by attribute name (`metaDescription`); the agent's card names them `SEO › Meta description`.
 
 ## Run
 

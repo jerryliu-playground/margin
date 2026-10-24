@@ -14,7 +14,12 @@ const fields: StrapiField[] = [
 ];
 
 function setup(values: Record<string, unknown>) {
-  const host = createStrapiHost({ fields, values, getAuthToken: async () => 'token' });
+  const host = createStrapiHost({
+    fields,
+    bodyField: 'body',
+    values,
+    getAuthToken: async () => 'token',
+  });
   const onChange = vi.fn();
   host.update(values, onChange);
   return { host, onChange };
@@ -34,12 +39,29 @@ describe('Strapi EditorHost', () => {
     ]);
   });
 
-  it('reads the form values as agent state, with no body yet', () => {
-    const { host } = setup({ title: 'Hi', seo: { metaTitle: 'T', metaDescription: null } });
+  it('reads the form values as agent state, body included', () => {
+    const { host } = setup({
+      title: 'Hi',
+      seo: { metaTitle: 'T', metaDescription: null },
+      body: [{ type: 'paragraph', children: [{ type: 'text', text: 'Long text.' }] }],
+    });
     expect(host.getState()).toEqual({
       fields: { title: 'Hi', 'seo.metaDescription': '' },
-      body: [],
+      body: [{ blockId: 'b0', type: 'paragraph', text: 'Long text.' }],
     });
+  });
+
+  it('replaces one body block through onChange', async () => {
+    const other = { type: 'heading', level: 2, children: [{ type: 'text', text: 'Keep' }] };
+    const { host, onChange } = setup({
+      body: [other, { type: 'paragraph', children: [{ type: 'text', text: 'Long text.' }] }],
+    });
+    await host.applyBodyEdit('b1', { type: 'paragraph', text: 'Short.' });
+    expect(onChange).toHaveBeenCalledWith('body', [
+      other,
+      { type: 'paragraph', children: [{ type: 'text', text: 'Short.' }] },
+    ]);
+    expect(host.getState().body[1]?.text).toBe('Short.');
   });
 
   it('sets a top-level field through onChange', async () => {
@@ -75,12 +97,21 @@ describe('Strapi EditorHost', () => {
     expect(seen).toEqual(['B']);
   });
 
-  it('refuses unknown fields, lists, and body edits', async () => {
+  it('refuses unknown fields, lists, and blocks that do not exist', async () => {
     const { host } = setup({});
     await expect(host.applyFieldValue('price', '1')).rejects.toThrow(/no field "price"/);
     await expect(host.applyFieldValue('title', ['a'])).rejects.toThrow(/takes text/);
     await expect(host.applyBodyEdit('b0', { type: 'paragraph', text: 'x' })).rejects.toThrow(
-      /not supported/,
+      /No block/,
+    );
+  });
+
+  it('has no body without a body field', async () => {
+    const host = createStrapiHost({ fields, values: { body: [] }, getAuthToken: async () => '' });
+    host.update({ body: [] }, vi.fn());
+    expect(host.getState().body).toEqual([]);
+    await expect(host.applyBodyEdit('b0', { type: 'paragraph', text: 'x' })).rejects.toThrow(
+      /no body/,
     );
   });
 });

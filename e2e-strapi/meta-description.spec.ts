@@ -6,22 +6,20 @@ import {
   expectPanelHasNoAxeViolations,
   panel,
   readArticle,
-  signIn,
+  hideGuidedTour,
 } from './helpers';
 
 const PARAGRAPH = 'People scan web pages for answers. They leave when they cannot find them.';
-const TITLE = 'Why short sentences win';
 const CARD = 'SEO › Meta description';
-// The agent sees fields only until the Blocks body is wired up (plan P4.7), so the mock
-// model writes the meta description from the title.
-const META = TITLE;
+// The mock model writes the meta description from the first paragraph.
+const META = PARAGRAPH;
 
 test.beforeEach(async ({ page }) => {
-  await signIn(page);
+  await hideGuidedTour(page);
 });
 
 test('accept a meta description in Strapi; it is saved on the entry', async ({ page, request }) => {
-  const id = await createArticle(request, { title: TITLE, paragraph: PARAGRAPH });
+  const id = await createArticle(request, { title: 'Scanning', paragraphs: [PARAGRAPH] });
   await page.goto(editUrl(id));
 
   await ask(page, 'Write a meta description');
@@ -44,7 +42,7 @@ test('accept a meta description in Strapi; it is saved on the entry', async ({ p
 });
 
 test('reject a meta description in Strapi; nothing changes', async ({ page, request }) => {
-  const id = await createArticle(request, { title: TITLE, paragraph: PARAGRAPH });
+  const id = await createArticle(request, { title: 'Scanning', paragraphs: [PARAGRAPH] });
   await page.goto(editUrl(id));
 
   await ask(page, 'Write a meta description');

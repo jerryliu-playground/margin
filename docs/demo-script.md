@@ -1,6 +1,4 @@
-# Demo video script (2–3 minutes)
-
-> Recording moved to after Phase 4 (SPEC §7). Add a short Strapi segment before recording.
+# Demo video script (about 3 minutes)
 
 For the owner to record. Narration in English; timings are targets.
 
@@ -10,6 +8,10 @@ For the owner to record. Narration in English; timings are targets.
 - Record shortly after 10:00 UTC, or open the sample article ("Writing for the web") and check it is unchanged. It resets daily.
 - Rehearse the prompts once: the real model's wording varies, but the flow is the same.
 - Have the repository open in a second tab (README, `docs/harness-log.md`, one PR with the AI review).
+- For the Strapi segment, run it locally with the real model:
+  1. `pnpm dev:strapi` once, so `examples/strapi/.env` exists; copy its `MARGIN_TOKEN_SECRET`.
+  2. In `apps/server/.env`: the same `MARGIN_TOKEN_SECRET`, `CMS_ORIGINS=http://localhost:1337`, and `MARGIN_MODEL=anthropic` with your key (you type the key; it never goes into the repo).
+  3. `pnpm dev` and `pnpm dev:strapi` in two terminals; sign in at http://localhost:1337/admin and open the sample article. Use a browser window at least 1280 px wide, so the panel sits beside the form.
 
 ## Shot list
 
@@ -51,22 +53,31 @@ For the owner to record. Narration in English; timings are targets.
 
 **Screen:** README architecture section.
 
-**Say:** "Under the hood the panel speaks AG-UI: streamed text, shared editor state, and frontend tool calls that become these cards. The panel only knows an `EditorHost` interface, so it can move into Strapi or WordPress later."
+**Say:** "Under the hood the panel speaks AG-UI: streamed text, shared editor state, and frontend tool calls that become these cards. The panel only knows an `EditorHost` interface, so the same panel can live in another editor."
 
-### 7. How it was built (2:25–2:50)
+### 7. The same panel in Strapi (2:25–2:55)
+
+**Screen:** Strapi's Content Manager, the sample article open, the Margin panel in the right column.
+
+**Do:** type "Write a meta description." and send; **Accept** the "SEO › Meta description" card; the field inside the SEO component fills in. Click Strapi's **Save**.
+
+**Say:** "This is the same panel inside Strapi 5, as a plugin. Strapi's form is the host now: the agent sees its fields, even the ones inside a component, and its Blocks body. Accepting changes the form, and Strapi's own Save button stays in charge. The browser never holds a long-lived secret: Strapi's server signs a fifteen-minute token for the signed-in editor."
+
+### 8. How it was built (2:55–3:15)
 
 **Screen:** `docs/harness-log.md`, then a pull request with the AI review comment.
 
 **Say:** "The whole codebase was written by Claude Code inside a harness: rules and skills before it acts, strict types, boundary lint rules, tests with a mock model, axe checks and an AI review after it acts. When it repeats a mistake, the fix becomes a new rule or check, and this log is the record."
 
-### 8. Close (2:50–3:00)
+### 9. Close (3:15–3:25)
 
 **Screen:** the live URL and the repository URL.
 
-**Say:** "It is live at margin-demo.fly.dev, and the code and the harness are on GitHub."
+**Say:** "The demo is live at margin-demo.fly.dev, the Strapi plugin is in the repository, and so is the harness."
 
 ## If something goes wrong on camera
 
 - **"The demo has used today's agent runs":** the daily cap (300) was hit; record the next day or raise `DAILY_AGENT_RUN_LIMIT` in `fly.toml` and redeploy.
 - **The agent proposes something odd:** reject it with a reason. That is part of the story.
 - **Slow first reply:** the machine is always on, so this is the model; keep talking over it.
+- **Strapi panel says it cannot reach the agent:** check that both `.env` files have the same `MARGIN_TOKEN_SECRET` and that `CMS_ORIGINS` lists `http://localhost:1337`; restart `pnpm dev`.
