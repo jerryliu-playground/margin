@@ -25,7 +25,7 @@ pnpm install
 pnpm dev          # web + server; the server reads apps/server/.env (e2e never does)
 pnpm check        # typecheck + lint + format check + unit tests + e2e (must pass before you say a task is done)
 pnpm typecheck    # tsc --noEmit in every package
-pnpm lint         # ESLint (includes boundary rules)
+pnpm lint         # ESLint (includes boundary rules) + raw colour check (scripts/check-colors.mjs)
 pnpm format       # Prettier write (pnpm format:check to verify)
 pnpm test         # unit tests (Vitest)
 pnpm e2e          # Playwright (builds web, starts web + server with a mocked model)

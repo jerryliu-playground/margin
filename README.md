@@ -55,6 +55,7 @@ The codebase was written by Claude Code. The harness is what kept that output at
 **Sensors (after the agent acts)**
 
 - Strict TypeScript in every package; ESLint rules that encode the boundaries (the panel cannot import TipTap, shared cannot do I/O, production code cannot import test helpers), each with a message that says which rule it protects and what to do instead.
+- A colour check (`scripts/check-colors.mjs`, part of `pnpm lint`): raw colours only in the token files, so dark mode and host theming cannot silently break.
 - Unit tests (Vitest), including a check of every agent event against the AG-UI `EventSchema` and the AG-UI client's own `verifyEvents` ordering rules.
 - Playwright e2e against a scripted mock model (no test calls the real API), with axe on every screen and card state and a keyboard-only flow.
 - CI: `pnpm check`, a production image build with a smoke test, and an AI review of every pull request against `CLAUDE.md` (ADR 0008).
