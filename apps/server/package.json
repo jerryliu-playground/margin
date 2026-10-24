@@ -16,6 +16,7 @@
     "@fastify/rate-limit": "11.2.1",
     "@fastify/sse": "0.6.1",
     "@fastify/static": "10.1.6",
+    "@margin/agent-token": "workspace:*",
     "@margin/shared": "workspace:*",
     "ai": "7.0.143",
     "better-sqlite3": "13.0.3",

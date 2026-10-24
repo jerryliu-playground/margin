@@ -6,7 +6,7 @@ import { resolve } from 'node:path';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { createModelFactory } from './agent/model';
 import { agentRoutes } from './agent/routes';
-import { createTokenService, randomSecret } from './auth';
+import { createTokenService, randomSecret } from '@margin/agent-token';
 import { createDailyCounter, scheduleNightlyReset } from './demo';
 import type { Config } from './config';
 import { openDb } from './db/client';
@@ -78,7 +78,7 @@ export async function buildApp(config: Config): Promise<FastifyInstance> {
   app.post(
     '/auth/token',
     { config: { rateLimit: { max: 30, timeWindow: '1 minute' } } },
-    async () => tokens.issue(),
+    async () => tokens.issue({ iss: 'demo', sub: '' }),
   );
 
   // Everything registered inside needs a valid bearer token.

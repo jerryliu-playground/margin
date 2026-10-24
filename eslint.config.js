@@ -48,6 +48,11 @@ const SERVER_BROWSER_IMPORT = {
   message:
     'CLAUDE.md rule 4: the server must not import browser code. Shared contracts belong in "@margin/shared".',
 };
+const TOKEN_IMPORT = {
+  group: ['@margin/agent-token', '@margin/agent-token/*'],
+  message:
+    'ADR 0010: @margin/agent-token is Node-only and holds the signing code. Browser code gets a token from EditorHost.getAuthToken(); mint tokens on a server.',
+};
 const TESTING_IMPORT = {
   group: ['**/testing/*', './testing/*', '../testing/*'],
   message:
@@ -95,9 +100,20 @@ export default tseslint.config(
     plugins: { 'react-hooks': reactHooks },
     rules: reactHooks.configs.recommended.rules,
   },
-  ...boundaries('apps/web/**/*.{ts,tsx}', [SERVER_IMPORT]),
-  ...boundaries('packages/agent-panel/**/*.{ts,tsx}', [SERVER_IMPORT, APP_IMPORT, HOST_IMPORT]),
-  ...boundaries('packages/shared/**/*.ts', [SERVER_IMPORT, APP_IMPORT, PANEL_IMPORT, IO_IMPORT]),
+  ...boundaries('apps/web/**/*.{ts,tsx}', [SERVER_IMPORT, TOKEN_IMPORT]),
+  ...boundaries('packages/agent-panel/**/*.{ts,tsx}', [
+    SERVER_IMPORT,
+    APP_IMPORT,
+    HOST_IMPORT,
+    TOKEN_IMPORT,
+  ]),
+  ...boundaries('packages/shared/**/*.ts', [
+    SERVER_IMPORT,
+    APP_IMPORT,
+    PANEL_IMPORT,
+    IO_IMPORT,
+    TOKEN_IMPORT,
+  ]),
   ...boundaries('apps/server/**/*.ts', [SERVER_BROWSER_IMPORT]),
   {
     files: ['packages/shared/**/*.ts'],

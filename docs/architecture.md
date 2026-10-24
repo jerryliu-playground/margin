@@ -14,6 +14,7 @@ apps/web ──────────► packages/agent-panel ──► packag
 
 | Package                | May import                       | Must never import                                                                |
 | ---------------------- | -------------------------------- | -------------------------------------------------------------------------------- |
+| `packages/agent-token` | `node:crypto`                    | anything in `apps/*`; it must never be imported by browser code                  |
 | `packages/shared`      | `zod`                            | anything in `apps/*` or `packages/agent-panel`; any I/O (`node:fs`, `fetch`, DB) |
 | `packages/agent-panel` | `shared`, React, `@ag-ui/client` | `@tiptap/*`, Strapi, WordPress, `apps/*`                                         |
 | `apps/web`             | `shared`, `agent-panel`, TipTap  | `apps/server`                                                                    |
@@ -84,6 +85,8 @@ Approval rules the session enforces:
 ## Auth
 
 The panel never holds the model key. It calls `EditorHost.getAuthToken()` and sends the token as a bearer header. The server holds the model key from environment variables (ADR 0006).
+
+Tokens are signed and checked by `packages/agent-token` (Node only, ESLint keeps it out of browser code): a 15-minute HMAC token whose claims say which host asked (`iss`) and for which user (`sub`). The demo's `POST /auth/token` issues `iss: "demo"`; a CMS backend issues its own with the same secret (ADR 0010).
 
 ## Document model
 

@@ -37,7 +37,7 @@ Approved by the owner on 2026-10-24, with decisions 2a and 5a below. One concern
 PR A (`phase-4` branch): fields.
 
 - [x] **P4.0 Plan and ADR 0010**: this plan and ADR 0010 (Strapi plugin: placement, token, packages, tests). `docs/`.
-- [ ] **P4.1 `packages/agent-token`**: move token issue/verify out of `apps/server`; add `iss`/`sub` (decision 7). Workspace, `apps/server`.
+- [x] **P4.1 `packages/agent-token`**: move token issue/verify out of `apps/server`; add `iss`/`sub` (decision 7). Workspace, `apps/server`.
 - [ ] **P4.2 CORS for CMS admins**: `CMS_ORIGINS` (a comma-separated allowlist, empty by default) added to the agent routes' CORS. `apps/server`.
 - [ ] **P4.3 Example Strapi project**: `examples/strapi` with the Article type, SQLite, an `seo` component (metaTitle, metaDescription), a seed article and a local test admin from env; a `pnpm dev:strapi` script; Strapi versions pinned in ADR 0007. `examples/strapi`.
 - [ ] **P4.4 Plugin skeleton**: `plugins/strapi` (via `@strapi/sdk-plugin`), the `POST /margin/token` admin route, and an empty side panel; unit test for the route. `plugins/strapi`.
