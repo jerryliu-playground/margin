@@ -255,7 +255,7 @@
   background: var(--margin-color-surface-muted);
 }
 .margin-proposal__badge--pending {
-  color: var(--margin-color-accent);
+  color: var(--margin-color-accent-text);
   background: var(--margin-color-accent-soft);
 }
 .margin-proposal__badge--accepted {
