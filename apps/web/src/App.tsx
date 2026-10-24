@@ -2,7 +2,7 @@ import { DocumentListPage } from './pages/DocumentListPage';
 import { DocumentPage } from './pages/DocumentPage';
 import { useRoute } from './router';
 
-export function App() {
+function Page() {
   const route = useRoute();
   switch (route.name) {
     case 'list':
@@ -17,4 +17,18 @@ export function App() {
         </main>
       );
   }
+}
+
+export function App() {
+  return (
+    <div className="app">
+      <header className="topbar">
+        <a href="#/" className="topbar__brand">
+          <span className="topbar__mark" aria-hidden="true" />
+          Margin
+        </a>
+      </header>
+      <Page />
+    </div>
+  );
 }

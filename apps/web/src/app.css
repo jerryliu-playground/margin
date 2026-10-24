@@ -1,21 +1,74 @@
 body {
   margin: 0;
-  font:
-    16px/1.5 system-ui,
-    sans-serif;
-  color: #1f2328;
-  background: #ffffff;
+  font-family: var(--app-font);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--app-color-text);
+  background: var(--app-color-bg);
 }
+.app {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+/* Top bar */
+.topbar {
+  display: flex;
+  align-items: center;
+  height: var(--app-topbar-height);
+  padding: 0 var(--app-space-5);
+  border-bottom: 1px solid var(--app-color-border);
+  background: var(--app-color-surface);
+}
+.topbar__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--app-space-2);
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--app-color-text);
+  text-decoration: none;
+}
+.topbar__mark {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: var(--app-color-accent);
+  /* A page with a margin rule: the product's mark. */
+  box-shadow: inset 5px 0 0 var(--app-color-accent-hover);
+}
+
+/* Page layout: the editor, and the agent panel beside it. */
 .layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 380px;
-  min-height: 100vh;
+  min-width: 0;
 }
 .page {
-  max-width: 760px;
-  padding: 24px 32px;
+  width: 100%;
+  max-width: 780px;
+  margin: 0 auto;
+  padding: var(--app-space-5) var(--app-space-6) var(--app-space-6);
   box-sizing: border-box;
   min-width: 0;
+}
+/*
+ * Beside the editor, the page scrolls on its own and the panel fills the window height,
+ * so the message box is always in view. The page keeps its reading width with padding.
+ */
+@media (min-width: 901px) {
+  .layout {
+    height: calc(100dvh - var(--app-topbar-height));
+  }
+  .layout > .page {
+    max-width: none;
+    overflow-y: auto;
+    padding-inline: max(var(--app-space-6), calc((100% - 780px) / 2 + var(--app-space-6)));
+  }
+  .layout > .margin-panel {
+    height: 100%;
+  }
 }
 /* Narrow screens: the agent panel goes below the editor instead of beside it. */
 @media (max-width: 900px) {
@@ -23,68 +76,254 @@ body {
     grid-template-columns: minmax(0, 1fr);
   }
   .page {
-    padding: 16px;
+    padding: var(--app-space-4);
   }
+  .topbar {
+    padding: 0 var(--app-space-4);
+  }
+}
+h1 {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.25;
 }
 .page__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--app-space-4);
+  margin-bottom: var(--app-space-5);
 }
 .muted {
-  color: #57606a;
+  color: var(--app-color-text-muted);
   font-size: 14px;
 }
-.doc-list {
-  padding-left: 20px;
+a {
+  color: var(--app-color-accent);
 }
+/* Document list */
+.doc-list {
+  display: grid;
+  gap: var(--app-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.doc-card {
+  position: relative;
+  display: grid;
+  gap: var(--app-space-1);
+  padding: var(--app-space-4) var(--app-space-5);
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-lg);
+  background: var(--app-color-surface);
+}
+.doc-card:hover {
+  border-color: var(--app-color-border-strong);
+}
+.doc-card__title {
+  font-family: var(--app-font-doc);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--app-color-text);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+/* The whole card is the link's click target; the link stays the only focus stop. */
+.doc-card__title::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--app-radius-lg);
+}
+.doc-card__title:hover {
+  text-decoration: underline;
+}
+.doc-list__empty {
+  padding: var(--app-space-6);
+  text-align: center;
+  color: var(--app-color-text-muted);
+  border: 1px dashed var(--app-color-border-strong);
+  border-radius: var(--app-radius-lg);
+}
+
+/* Document editor */
 .doc-form {
   display: grid;
-  gap: 16px;
+  gap: var(--app-space-5);
+}
+.doc-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--app-space-4);
+  margin: calc(-1 * var(--app-space-5)) calc(-1 * var(--app-space-2)) 0;
+  padding: var(--app-space-5) var(--app-space-2) var(--app-space-3);
+  background: var(--app-color-bg);
+  border-bottom: 1px solid var(--app-color-border);
+}
+.doc-header__title {
+  display: grid;
+  gap: var(--app-space-1);
+  min-width: 0;
+}
+.doc-header__title h1 {
+  font-family: var(--app-font-doc);
+  overflow-wrap: anywhere;
+}
+.doc-header__back {
+  font-size: 14px;
+  text-decoration: none;
+}
+.doc-header__back:hover {
+  text-decoration: underline;
+}
+.doc-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--app-space-3);
+  flex-shrink: 0;
+}
+.doc-section {
+  display: grid;
+  gap: var(--app-space-4);
+  margin: 0;
+  padding: var(--app-space-4) var(--app-space-5) var(--app-space-5);
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-lg);
+  background: var(--app-color-surface);
+  min-width: 0;
+}
+.doc-section legend {
+  padding: 0 var(--app-space-2);
+  margin-left: calc(-1 * var(--app-space-2));
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--app-color-text-muted);
 }
 .doc-form label,
 .doc-form__body {
   display: grid;
-  gap: 4px;
+  gap: var(--app-space-1);
+  font-size: 14px;
   font-weight: 600;
 }
 .doc-form input,
 .doc-form textarea {
   font: inherit;
+  font-size: 16px;
   font-weight: 400;
-  padding: 6px 8px;
-  border: 1px solid #8c959f;
-  border-radius: 6px;
+  padding: var(--app-space-2) 10px;
+  color: var(--app-color-text);
+  background: var(--app-color-surface);
+  border: 1px solid var(--app-color-control-border);
+  border-radius: var(--app-radius);
 }
-.doc-form__actions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
+.doc-form textarea {
+  resize: vertical;
+}
+.doc-form .muted {
+  font-weight: 400;
 }
 .body-editor {
-  min-height: 240px;
-  padding: 8px 12px;
-  border: 1px solid #8c959f;
-  border-radius: 6px;
+  min-height: 320px;
+  padding: var(--app-space-4) 20px;
+  font-family: var(--app-font-doc);
+  font-size: 18px;
+  line-height: 1.65;
   font-weight: 400;
+  color: var(--app-color-text);
+  background: var(--app-color-surface);
+  border: 1px solid var(--app-color-control-border);
+  border-radius: var(--app-radius);
+}
+.body-editor > :first-child {
+  margin-top: 0;
+}
+.body-editor h2,
+.body-editor h3 {
+  line-height: 1.3;
+}
+.body-editor img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--app-radius);
+}
+
+/* Controls */
+button {
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 7px 16px;
+  color: var(--app-color-text);
+  background: var(--app-color-surface);
+  border: 1px solid var(--app-color-control-border);
+  border-radius: var(--app-radius);
+  cursor: pointer;
+}
+button:hover:not(:disabled) {
+  background: var(--app-color-surface-muted);
+}
+button:disabled {
+  cursor: not-allowed;
+  color: var(--app-color-text-muted);
+}
+.button--primary {
+  color: var(--app-color-on-accent);
+  background: var(--app-color-accent);
+  border-color: var(--app-color-accent);
+}
+.button--primary:hover:not(:disabled) {
+  background: var(--app-color-accent-hover);
 }
 .body-editor:focus-visible,
 .doc-form input:focus-visible,
 .doc-form textarea:focus-visible,
 button:focus-visible,
 a:focus-visible {
-  outline: 2px solid #0969da;
+  outline: 2px solid var(--app-color-focus);
   outline-offset: 2px;
 }
-button {
-  font: inherit;
-  padding: 6px 14px;
-  border: 1px solid #1f2328;
-  border-radius: 6px;
-  background: #f6f8fa;
-  cursor: pointer;
+
+/* Narrow screens: tighter header to match the page padding. */
+@media (max-width: 900px) {
+  h1 {
+    font-size: 22px;
+  }
+  .doc-header {
+    margin-top: calc(-1 * var(--app-space-4));
+    padding-top: var(--app-space-4);
+  }
 }
-.body-editor img {
-  max-width: 100%;
-  height: auto;
+
+/* The app themes the agent panel through its tokens, as any host would. */
+.margin-panel {
+  --margin-font: var(--app-font);
+  --margin-color-bg: var(--app-color-surface);
+  --margin-color-surface: var(--app-color-surface);
+  --margin-color-accent: var(--app-color-accent);
+  --margin-color-accent-hover: var(--app-color-accent-hover);
+  --margin-color-accent-soft: var(--app-color-accent-soft);
+  --margin-color-on-accent: var(--app-color-on-accent);
+  --margin-color-surface-muted: var(--app-color-surface-muted);
+  --margin-color-text: var(--app-color-text);
+  --margin-color-text-muted: var(--app-color-text-muted);
+  --margin-color-border: var(--app-color-border);
+  --margin-color-border-strong: var(--app-color-border-strong);
+  --margin-color-control-border: var(--app-color-control-border);
+  --margin-color-focus: var(--app-color-focus);
+  --margin-color-success: var(--app-color-success);
+  --margin-color-success-soft: var(--app-color-success-soft);
+  --margin-color-warning: var(--app-color-warning);
+  --margin-color-danger: var(--app-color-danger);
+  --margin-color-del-bg: var(--app-color-del-bg);
+  --margin-color-del-text: var(--app-color-del-text);
+  --margin-color-ins-bg: var(--app-color-ins-bg);
+  --margin-color-ins-text: var(--app-color-ins-text);
 }

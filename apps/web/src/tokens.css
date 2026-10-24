@@ -1,0 +1,70 @@
+/*
+ * The demo app's design tokens. Raw colours belong here and nowhere else in apps/web
+ * (scripts/check-colors.mjs). The app also sets the agent panel's tokens from its own,
+ * the same way any host themes the panel.
+ */
+:root {
+  color-scheme: light dark;
+  --app-font: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --app-font-doc: 'Iowan Old Style', Charter, 'Palatino Linotype', Georgia, serif;
+
+  --app-color-bg: #f7f6f2;
+  --app-color-surface: #ffffff;
+  --app-color-surface-muted: #efede7;
+  --app-color-text: #1c1b19;
+  --app-color-text-muted: #5f5b53;
+  --app-color-border: #e3e0d8;
+  --app-color-border-strong: #8a857b;
+  --app-color-control-border: #8a857b;
+  --app-color-accent: #3a46a8;
+  --app-color-accent-hover: #2e388a;
+  --app-color-accent-soft: #eceefa;
+  --app-color-on-accent: #ffffff;
+  --app-color-focus: #3a46a8;
+  --app-color-success: #1a7f37;
+  --app-color-success-soft: #e6f4ea;
+  --app-color-warning: #8a5a00;
+  --app-color-danger: #a40e26;
+  --app-color-del-bg: #ffebe9;
+  --app-color-del-text: #82071e;
+  --app-color-ins-bg: #dafbe1;
+  --app-color-ins-text: #116329;
+
+  --app-space-1: 4px;
+  --app-space-2: 8px;
+  --app-space-3: 12px;
+  --app-space-4: 16px;
+  --app-space-5: 24px;
+  --app-space-6: 32px;
+
+  --app-radius: 6px;
+  --app-radius-lg: 10px;
+  --app-topbar-height: 52px;
+}
+
+/* Dark mode follows the system setting. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --app-color-bg: #161513;
+    --app-color-surface: #1f1e1b;
+    --app-color-surface-muted: #2a2925;
+    --app-color-text: #ecebe6;
+    --app-color-text-muted: #a8a49a;
+    --app-color-border: #34322d;
+    --app-color-border-strong: #77736a;
+    --app-color-control-border: #77736a;
+    --app-color-accent: #9aa5ff;
+    --app-color-accent-hover: #b7bfff;
+    --app-color-accent-soft: #2a2f55;
+    --app-color-on-accent: #14152b;
+    --app-color-focus: #9aa5ff;
+    --app-color-success: #4ac26b;
+    --app-color-success-soft: #17351f;
+    --app-color-warning: #e3b341;
+    --app-color-danger: #ff8a80;
+    --app-color-del-bg: #4c1f1c;
+    --app-color-del-text: #ffb4ab;
+    --app-color-ins-bg: #173b23;
+    --app-color-ins-text: #9be5b0;
+  }
+}

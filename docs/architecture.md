@@ -65,6 +65,8 @@ append { role: "tool", toolCallId, content } and runAgent again ──► agent 
 | `AgentPanel.tsx` / `ProposalCard.tsx` | UI; focus moves to the next pending card or the message box after an answer                         |
 | `testing/fake-agent.ts`               | Test doubles: scripted AG-UI agent and in-memory `EditorHost`                                       |
 
+Theming: the panel's colours, radii and fonts are CSS custom properties (`--margin-*`) in `tokens.css`, declared with zero specificity. A host themes the panel by setting them on `.margin-panel`; the demo app maps its own tokens (`apps/web/src/tokens.css`) this way. The host also decides the panel's height: given one, the conversation scrolls and the message box stays at the bottom.
+
 Approval rules the session enforces:
 
 - A turn's proposals are answered together: the next run starts when every tool call of the turn has an answer.

@@ -22,6 +22,15 @@ const STATUS_TEXT: Record<Exclude<ProposalStatus, 'pending'>, string> = {
   undone: 'Undone. The previous version is back.',
 };
 
+/** A short visual label; the full status is in the text below, so the badge is hidden from screen readers. */
+const BADGE_TEXT: Record<ProposalStatus, string> = {
+  pending: 'To review',
+  accepted: 'Accepted',
+  rejected: 'Rejected',
+  stale: 'Not applied',
+  undone: 'Undone',
+};
+
 function titleOf(p: Proposal): string {
   if (p.kind === 'field') return p.label;
   if (p.blockType === 'heading') return 'Heading edit';
@@ -106,15 +115,25 @@ export function ProposalCard({
       aria-labelledby={titleId}
       data-proposal={proposal.toolCallId}
     >
-      <h3 id={titleId} className="margin-proposal__title">
-        {title}
-      </h3>
+      <div className="margin-proposal__head">
+        <h3 id={titleId} className="margin-proposal__title">
+          {title}
+        </h3>
+        <span
+          className={`margin-proposal__badge margin-proposal__badge--${proposal.status}`}
+          aria-hidden="true"
+        >
+          {pending && outdated ? 'Outdated' : BADGE_TEXT[proposal.status]}
+        </span>
+      </div>
       <p className="margin-proposal__reason">{proposal.reason}</p>
-      {proposal.kind === 'body' && proposal.blockType === 'image' ? (
-        <ImageDiff before={before} after={after} />
-      ) : (
-        <Diff before={before} after={after} />
-      )}
+      <div className="margin-proposal__change">
+        {proposal.kind === 'body' && proposal.blockType === 'image' ? (
+          <ImageDiff before={before} after={after} />
+        ) : (
+          <Diff before={before} after={after} />
+        )}
+      </div>
       {pending && outdated && (
         <p className="margin-proposal__warning" role="alert">
           This block changed after the proposal was made, so it can no longer be applied.
@@ -137,7 +156,7 @@ export function ProposalCard({
             {!outdated && (
               <button
                 type="button"
-                className="margin-panel__button"
+                className="margin-panel__button margin-panel__button--primary"
                 data-action="accept"
                 onClick={onAccept}
               >
