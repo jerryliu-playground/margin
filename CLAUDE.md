@@ -13,7 +13,7 @@ A rich-text content editor with an AI agent in a side panel. The agent talks to 
 - `apps/server`: Node + Fastify, AI SDK agent (`ai` + `@ai-sdk/anthropic`) behind our own AG-UI adapter, REST for documents, SQLite (better-sqlite3 + Drizzle)
 - `packages/agent-panel`: host-agnostic React panel on the raw `@ag-ui/client` SDK (no CopilotKit)
 - `packages/shared`: types, zod schemas, pure helpers
-- Decisions and pinned versions: `docs/adr/` (0001–0009); deploying: `docs/deploy.md`
+- Decisions and pinned versions: `docs/adr/` (0001–0010); deploying: `docs/deploy.md`
 - Tests: Vitest, Playwright, axe-core · Lint: ESLint + typescript-eslint · Format: Prettier
 
 If a library's API is uncertain, check its current documentation instead of guessing. Record any new dependency in an ADR.
