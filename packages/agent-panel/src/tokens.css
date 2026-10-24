@@ -8,22 +8,34 @@
   --margin-font-size: 14px;
 
   --margin-color-bg: #ffffff;
+  --margin-color-surface: #ffffff;
   --margin-color-surface-muted: #f6f8fa;
   --margin-color-text: #1f2328;
   --margin-color-text-muted: #57606a;
   --margin-color-border: #d0d7de;
   --margin-color-border-strong: #8c959f;
-  --margin-color-control-border: #1f2328;
-  --margin-color-focus: #0969da;
+  --margin-color-control-border: #8c959f;
+  --margin-color-accent: #3a46a8;
+  --margin-color-accent-hover: #2e388a;
+  --margin-color-accent-soft: #eceefa;
+  --margin-color-on-accent: #ffffff;
+  --margin-color-focus: #3a46a8;
   --margin-color-success: #1a7f37;
-  --margin-color-warning: #9a6700;
+  --margin-color-success-soft: #e6f4ea;
+  --margin-color-warning: #8a5a00;
   --margin-color-danger: #a40e26;
   --margin-color-del-bg: #ffebe9;
   --margin-color-del-text: #82071e;
   --margin-color-ins-bg: #dafbe1;
   --margin-color-ins-text: #116329;
 
+  --margin-space-1: 4px;
+  --margin-space-2: 8px;
+  --margin-space-3: 12px;
+  --margin-space-4: 16px;
+
   --margin-radius-sm: 4px;
   --margin-radius: 6px;
-  --margin-radius-lg: 8px;
+  --margin-radius-lg: 10px;
+  --margin-radius-pill: 999px;
 }

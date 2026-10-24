@@ -53,6 +53,23 @@ body {
   box-sizing: border-box;
   min-width: 0;
 }
+/*
+ * Beside the editor, the page scrolls on its own and the panel fills the window height,
+ * so the message box is always in view. The page keeps its reading width with padding.
+ */
+@media (min-width: 901px) {
+  .layout {
+    height: calc(100dvh - var(--app-topbar-height));
+  }
+  .layout > .page {
+    max-width: none;
+    overflow-y: auto;
+    padding-inline: max(var(--app-space-6), calc((100% - 780px) / 2 + var(--app-space-6)));
+  }
+  .layout > .margin-panel {
+    height: 100%;
+  }
+}
 /* Narrow screens: the agent panel goes below the editor instead of beside it. */
 @media (max-width: 900px) {
   .layout {
@@ -247,6 +264,11 @@ a:focus-visible {
 .margin-panel {
   --margin-font: var(--app-font);
   --margin-color-bg: var(--app-color-surface);
+  --margin-color-surface: var(--app-color-surface);
+  --margin-color-accent: var(--app-color-accent);
+  --margin-color-accent-hover: var(--app-color-accent-hover);
+  --margin-color-accent-soft: var(--app-color-accent-soft);
+  --margin-color-on-accent: var(--app-color-on-accent);
   --margin-color-surface-muted: var(--app-color-surface-muted);
   --margin-color-text: var(--app-color-text);
   --margin-color-text-muted: var(--app-color-text-muted);

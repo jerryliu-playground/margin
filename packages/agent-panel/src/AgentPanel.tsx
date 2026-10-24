@@ -1,6 +1,6 @@
 import type { Message } from '@ag-ui/client';
 import type { EditorHost } from '@margin/shared';
-import { useId, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
 import type { Activity, AgentSession } from './agent-session';
 import { CHECK_TITLE, checkEntries, type CheckEntry } from './checks';
 import { TONE_PRESETS } from './presets';
@@ -52,6 +52,7 @@ export function AgentPanel({ host, agentUrl }: AgentPanelProps) {
   const [session, snapshot] = useAgentSession(host, agentUrl);
   const [draft, setDraft] = useState('');
   const rootRef = useRef<HTMLElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   /**
@@ -88,6 +89,14 @@ export function AgentPanel({ host, agentUrl }: AgentPanelProps) {
     (m) => ((m.role === 'user' || m.role === 'assistant') && textOf(m) !== '') || checks.has(m.id),
   );
 
+  // Keep the newest message or card in view while the agent streams.
+  const last = visible.at(-1);
+  const lastText = last ? textOf(last) : '';
+  useEffect(() => {
+    const body = bodyRef.current;
+    if (body) body.scrollTop = body.scrollHeight;
+  }, [visible.length, lastText, snapshot.proposals.length]);
+
   const submit = () => {
     if (!draft.trim() || snapshot.running) return;
     void session.send(draft);
@@ -102,98 +111,125 @@ export function AgentPanel({ host, agentUrl }: AgentPanelProps) {
 
   return (
     <aside className="margin-panel" aria-labelledby={headingId} ref={rootRef}>
-      <h2 id={headingId} className="margin-panel__title">
-        Agent
-      </h2>
-      {/* role="log" is not allowed on <ol>, so the log is a div of message blocks. */}
-      <div className="margin-panel__log" role="log" aria-label="Conversation" aria-live="polite">
-        {visible.map((m) => {
-          const check = checks.get(m.id);
-          if (check) return <CheckSummary key={m.id} entry={check} />;
-          return (
-            <div key={m.id} className={`margin-panel__msg margin-panel__msg--${m.role}`}>
-              <span className="margin-panel__who">{m.role === 'user' ? 'You' : 'Agent'}</span>
-              <p>{textOf(m)}</p>
-            </div>
-          );
-        })}
-      </div>
-      {snapshot.proposals.length > 0 && (
-        <section className="margin-panel__proposals" aria-label="Proposals">
-          {pendingCount > 1 && (
-            <div className="margin-panel__batch" role="group" aria-label="All pending proposals">
-              <button
-                type="button"
-                className="margin-panel__button"
-                onClick={() => answerAll((s) => s.acceptAll())}
-              >
-                Accept all {pendingCount}
-              </button>
-              <button
-                type="button"
-                className="margin-panel__button"
-                onClick={() => answerAll((s) => s.rejectAll())}
-              >
-                Reject all {pendingCount}
-              </button>
-            </div>
-          )}
-          {snapshot.proposals.map((p) => (
-            <ProposalCard
-              key={p.toolCallId}
-              proposal={p}
-              outdated={snapshot.outdated.has(p.toolCallId)}
-              onAccept={() => answer(p.toolCallId, (s) => s.accept(p.toolCallId))}
-              onReject={(reason) => answer(p.toolCallId, (s) => s.reject(p.toolCallId, reason))}
-              onUndo={() => answer(p.toolCallId, (s) => s.undo(p.toolCallId))}
-            />
-          ))}
-        </section>
-      )}
-      <p className="margin-panel__status" role="status">
-        {ACTIVITY_TEXT[snapshot.activity] || pendingText}
-      </p>
-      {snapshot.error && (
-        <p className="margin-panel__error" role="alert">
-          {snapshot.error}
+      <header className="margin-panel__header">
+        <h2 id={headingId} className="margin-panel__title">
+          Agent
+        </h2>
+        <p className="margin-panel__subtitle">
+          Suggests changes. Nothing changes until you accept.
         </p>
-      )}
-      <div className="margin-panel__presets" role="group" aria-label="Tone">
-        {TONE_PRESETS.map((preset) => (
-          <button
-            key={preset.label}
-            type="button"
-            className="margin-panel__button"
-            disabled={snapshot.running}
-            onClick={() => void session.send(preset.prompt)}
-          >
-            {preset.label}
-          </button>
-        ))}
-      </div>
-      <form
-        className="margin-panel__form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          submit();
-        }}
+      </header>
+      {/* It scrolls, so keyboard users can focus it to scroll even when it holds no buttons. */}
+      <div
+        className="margin-panel__body"
+        ref={bodyRef}
+        role="region"
+        aria-label="Conversation and proposals"
+        tabIndex={0}
       >
-        <label htmlFor={inputId} className="margin-panel__label">
-          Message the agent
-        </label>
-        <textarea
-          id={inputId}
-          ref={inputRef}
-          className="margin-panel__input"
-          rows={3}
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={onKeyDown}
-        />
-        <button type="submit" className="margin-panel__button" disabled={snapshot.running}>
-          Send
-        </button>
-      </form>
+        {visible.length === 0 && snapshot.proposals.length === 0 && (
+          <p className="margin-panel__empty">
+            Try “Write a meta description” or “Check accessibility”.
+          </p>
+        )}
+        {/* role="log" is not allowed on <ol>, so the log is a div of message blocks. */}
+        <div className="margin-panel__log" role="log" aria-label="Conversation" aria-live="polite">
+          {visible.map((m) => {
+            const check = checks.get(m.id);
+            if (check) return <CheckSummary key={m.id} entry={check} />;
+            return (
+              <div key={m.id} className={`margin-panel__msg margin-panel__msg--${m.role}`}>
+                <span className="margin-panel__who">{m.role === 'user' ? 'You' : 'Agent'}</span>
+                <p>{textOf(m)}</p>
+              </div>
+            );
+          })}
+        </div>
+        {snapshot.proposals.length > 0 && (
+          <section className="margin-panel__proposals" aria-label="Proposals">
+            {pendingCount > 1 && (
+              <div className="margin-panel__batch" role="group" aria-label="All pending proposals">
+                <button
+                  type="button"
+                  className="margin-panel__button margin-panel__button--primary"
+                  onClick={() => answerAll((s) => s.acceptAll())}
+                >
+                  Accept all {pendingCount}
+                </button>
+                <button
+                  type="button"
+                  className="margin-panel__button"
+                  onClick={() => answerAll((s) => s.rejectAll())}
+                >
+                  Reject all {pendingCount}
+                </button>
+              </div>
+            )}
+            {snapshot.proposals.map((p) => (
+              <ProposalCard
+                key={p.toolCallId}
+                proposal={p}
+                outdated={snapshot.outdated.has(p.toolCallId)}
+                onAccept={() => answer(p.toolCallId, (s) => s.accept(p.toolCallId))}
+                onReject={(reason) => answer(p.toolCallId, (s) => s.reject(p.toolCallId, reason))}
+                onUndo={() => answer(p.toolCallId, (s) => s.undo(p.toolCallId))}
+              />
+            ))}
+          </section>
+        )}
+      </div>
+      <div className="margin-panel__footer">
+        <p className="margin-panel__status" role="status">
+          {ACTIVITY_TEXT[snapshot.activity] || pendingText}
+        </p>
+        {snapshot.error && (
+          <p className="margin-panel__error" role="alert">
+            {snapshot.error}
+          </p>
+        )}
+        <div className="margin-panel__presets" role="group" aria-label="Tone">
+          {TONE_PRESETS.map((preset) => (
+            <button
+              key={preset.label}
+              type="button"
+              className="margin-panel__preset"
+              disabled={snapshot.running}
+              onClick={() => void session.send(preset.prompt)}
+            >
+              {preset.label}
+            </button>
+          ))}
+        </div>
+        <form
+          className="margin-panel__form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            submit();
+          }}
+        >
+          <label htmlFor={inputId} className="margin-panel__label">
+            Message the agent
+          </label>
+          <div className="margin-panel__compose">
+            <textarea
+              id={inputId}
+              ref={inputRef}
+              className="margin-panel__input"
+              rows={2}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={onKeyDown}
+            />
+            <button
+              type="submit"
+              className="margin-panel__button margin-panel__button--primary"
+              disabled={snapshot.running}
+            >
+              Send
+            </button>
+          </div>
+        </form>
+      </div>
     </aside>
   );
 }
