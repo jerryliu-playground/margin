@@ -23,7 +23,7 @@ function AgentForEntry({
     () => strapiFields(contentType, components, bodyField),
     [contentType, components, bodyField],
   );
-  const [host] = useState(() => createStrapiHost({ fields, values, getAuthToken }));
+  const [host] = useState(() => createStrapiHost({ fields, bodyField, values, getAuthToken }));
   useEffect(() => host.update(values, onChange), [host, values, onChange]);
   return <AgentPanel host={host} agentUrl={agentUrl} />;
 }

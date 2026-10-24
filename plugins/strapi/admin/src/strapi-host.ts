@@ -1,8 +1,11 @@
 import type { BodyBlockContent, EditorHost, FieldValue } from '@margin/shared';
+import { replaceBlock, toBodyBlocks, type StrapiBlock } from './blocks';
 import { readField, type StrapiField } from './fields';
 
 export interface StrapiHostOptions {
   fields: StrapiField[];
+  /** The Blocks attribute the agent edits block by block; no body when absent. */
+  bodyField?: string | undefined;
   getAuthToken: () => Promise<string>;
   values: Record<string, unknown>;
 }
@@ -27,7 +30,7 @@ export function createStrapiHost(options: StrapiHostOptions): StrapiHost {
 
   const getState = () => ({
     fields: Object.fromEntries(options.fields.map((f) => [f.name, readField(values, f.path)])),
-    body: [],
+    body: options.bodyField ? toBodyBlocks(values[options.bodyField] as StrapiBlock[] | null) : [],
   });
   const emit = () => {
     const state = getState();
@@ -61,8 +64,14 @@ export function createStrapiHost(options: StrapiHostOptions): StrapiHost {
       }
       emit();
     },
-    async applyBodyEdit(_blockId: string, _block: BodyBlockContent) {
-      throw new Error('Body edits are not supported in Strapi yet.');
+    async applyBodyEdit(blockId: string, block: BodyBlockContent) {
+      const name = options.bodyField;
+      if (!name) throw new Error('This content type has no body for the agent to edit.');
+      if (!onChange) throw new Error('The Strapi form is not ready yet.');
+      const body = replaceBlock(values[name] as StrapiBlock[] | null, blockId, block);
+      values = { ...values, [name]: body };
+      onChange(name, body);
+      emit();
     },
     getAuthToken: options.getAuthToken,
     update(next, change) {

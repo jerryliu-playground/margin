@@ -12,17 +12,27 @@ export const STRAPI_URL = `http://localhost:${STRAPI_PORT}`;
 const SERVER_URL = `http://localhost:${SERVER_PORT}`;
 const TOKEN_SECRET = 'e2e-only-token-secret-at-least-32-characters';
 export const ADMIN = { email: 'e2e@margin.test', password: 'E2e-only-Margin-1' };
+/** The signed-in admin, saved once by e2e-strapi/auth.setup.ts. */
+export const ADMIN_STATE = 'test-results/.strapi-admin.json';
 
 export default defineConfig({
   testDir: 'e2e-strapi',
   forbidOnly: !!process.env.CI,
+  // One worker: Strapi rate-limits admin logins, and every test shares one database.
+  workers: 1,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: { baseURL: STRAPI_URL, trace: 'retain-on-failure', viewport: { width: 1440, height: 900 } },
   projects: [
+    { name: 'setup', testMatch: /auth\.setup\.ts/ },
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
+      dependencies: ['setup'],
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1440, height: 900 },
+        storageState: ADMIN_STATE,
+      },
     },
   ],
   webServer: [
