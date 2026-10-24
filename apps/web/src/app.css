@@ -101,8 +101,50 @@ h1 {
 a {
   color: var(--app-color-accent);
 }
+/* Document list */
 .doc-list {
-  padding-left: 20px;
+  display: grid;
+  gap: var(--app-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.doc-card {
+  position: relative;
+  display: grid;
+  gap: var(--app-space-1);
+  padding: var(--app-space-4) var(--app-space-5);
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-lg);
+  background: var(--app-color-surface);
+}
+.doc-card:hover {
+  border-color: var(--app-color-border-strong);
+}
+.doc-card__title {
+  font-family: var(--app-font-doc);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--app-color-text);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+/* The whole card is the link's click target; the link stays the only focus stop. */
+.doc-card__title::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--app-radius-lg);
+}
+.doc-card__title:hover {
+  text-decoration: underline;
+}
+.doc-list__empty {
+  padding: var(--app-space-6);
+  text-align: center;
+  color: var(--app-color-text-muted);
+  border: 1px dashed var(--app-color-border-strong);
+  border-radius: var(--app-radius-lg);
 }
 
 /* Document editor */

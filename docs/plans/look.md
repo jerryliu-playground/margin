@@ -22,7 +22,7 @@ PR (`look` branch):
 - [x] **L2 Colour check**: `scripts/check-colors.mjs` in `pnpm lint`, with a message that says which token file to use; CLAUDE.md commands updated. Root.
 - [x] **L3 Editor page**: top bar (app name, link to all documents, save state), fields grouped into "Content" and "Search and sharing", a reading-width body in a serif face, primary Save button. `apps/web`.
 - [x] **L4 Panel**: message bubbles, the message box pinned at the bottom of the panel, cards with a status badge, a primary Accept button and secondary Reject/Undo. `packages/agent-panel`.
-- [ ] **L5 Document list**: documents as cards with relative times ("2 days ago") and an empty state. `apps/web`.
+- [x] **L5 Document list**: documents as cards with relative times ("2 days ago") and an empty state. `apps/web`.
 - [ ] **L6 Dark mode**: dark values for the app tokens, mapped into the panel; axe runs on every screen and card state in both schemes. `apps/web`, `e2e/`.
 
 After each step the owner gets a screenshot before the next one starts.
