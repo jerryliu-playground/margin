@@ -53,6 +53,11 @@ const TOKEN_IMPORT = {
   message:
     'ADR 0010: @margin/agent-token is Node-only and holds the signing code. Browser code gets a token from EditorHost.getAuthToken(); mint tokens on a server.',
 };
+const PLUGIN_ADMIN_IMPORT = {
+  group: ['**/admin/src/**', '@margin/agent-panel', '@margin/agent-panel/*'],
+  message:
+    'ADR 0010: a plugin\'s server part runs in the CMS, not the browser. Share contracts through "@margin/shared".',
+};
 const TESTING_IMPORT = {
   group: ['**/testing/*', './testing/*', '../testing/*'],
   message:
@@ -103,7 +108,11 @@ export default tseslint.config(
     languageOptions: { globals: globals.node },
   },
   {
-    files: ['apps/web/**/*.{ts,tsx}', 'packages/agent-panel/**/*.{ts,tsx}'],
+    files: [
+      'apps/web/**/*.{ts,tsx}',
+      'packages/agent-panel/**/*.{ts,tsx}',
+      'plugins/*/admin/**/*.{ts,tsx}',
+    ],
     languageOptions: { globals: globals.browser },
     plugins: { 'react-hooks': reactHooks },
     rules: reactHooks.configs.recommended.rules,
@@ -123,6 +132,9 @@ export default tseslint.config(
     TOKEN_IMPORT,
   ]),
   ...boundaries('apps/server/**/*.ts', [SERVER_BROWSER_IMPORT]),
+  // CMS plugins (ADR 0010): the admin part runs in the browser, the server part in the CMS.
+  ...boundaries('plugins/*/admin/**/*.{ts,tsx}', [SERVER_IMPORT, APP_IMPORT, TOKEN_IMPORT]),
+  ...boundaries('plugins/*/server/**/*.ts', [APP_IMPORT, PLUGIN_ADMIN_IMPORT]),
   {
     files: ['packages/shared/**/*.ts'],
     rules: {

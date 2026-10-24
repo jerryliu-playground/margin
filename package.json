@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "pnpm --parallel --filter @margin/web --filter @margin/server dev",
-    "dev:strapi": "pnpm --filter @margin/example-strapi develop",
+    "dev:strapi": "pnpm --filter @margin/strapi-plugin build && pnpm --filter @margin/example-strapi develop",
     "build": "pnpm --filter @margin/web build",
     "typecheck": "tsc -p . && pnpm -r typecheck",
     "lint": "eslint . --max-warnings 0 && node scripts/check-colors.mjs",

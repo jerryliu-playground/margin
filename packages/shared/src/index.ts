@@ -1,6 +1,7 @@
 export * from './agent';
 export * from './api';
 export * from './checks';
+export * from './cms';
 export * from './diff';
 export * from './document';
 export * from './editor-host';

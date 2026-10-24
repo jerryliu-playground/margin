@@ -18,8 +18,14 @@ if (!existsSync(file)) {
       `TRANSFER_TOKEN_SALT=${secret()}`,
       `JWT_SECRET=${secret()}`,
       `ENCRYPTION_KEY=${secret()}`,
+      '# The Margin server must use the same value (apps/server/.env, MARGIN_TOKEN_SECRET).',
+      `MARGIN_TOKEN_SECRET=${randomBytes(32).toString('hex')}`,
+      'MARGIN_AGENT_URL=http://localhost:8790',
       '',
     ].join('\n'),
   );
   console.log('Wrote examples/strapi/.env with new local secrets.');
+  console.log(
+    'Copy its MARGIN_TOKEN_SECRET into apps/server/.env, and set CMS_ORIGINS=http://localhost:1337 there.',
+  );
 }

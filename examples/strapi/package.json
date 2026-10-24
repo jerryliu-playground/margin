@@ -10,6 +10,7 @@
     "strapi": "strapi"
   },
   "dependencies": {
+    "@margin/strapi-plugin": "workspace:*",
     "@strapi/strapi": "5.59.0",
     "better-sqlite3": "13.0.3",
     "react": "18.3.1",
@@ -20,6 +21,7 @@
   "devDependencies": {
     "@types/node": "24.19.2",
     "@types/react": "18.3.31",
-    "@types/react-dom": "18.3.7"
+    "@types/react-dom": "18.3.7",
+    "vite": "6.4.3"
   }
 }
