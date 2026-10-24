@@ -41,10 +41,17 @@ export async function buildApp(config: Config): Promise<FastifyInstance> {
   }
   const tokens = createTokenService(config.MARGIN_TOKEN_SECRET ?? randomSecret());
 
+  // The demo app may call everything; CMS admin panels only the agent (ADR 0010).
+  const agentOrigins = [config.WEB_ORIGIN, ...config.CMS_ORIGINS];
   await app.register(cors, {
-    origin: [config.WEB_ORIGIN],
-    methods: ['GET', 'POST', 'PUT'],
-    allowedHeaders: ['authorization', 'content-type'],
+    delegator: (req, callback) => {
+      const isAgent = req.url?.split('?')[0] === '/agent';
+      callback(null, {
+        origin: isAgent ? agentOrigins : [config.WEB_ORIGIN],
+        methods: ['GET', 'POST', 'PUT'],
+        allowedHeaders: ['authorization', 'content-type'],
+      });
+    },
   });
   await app.register(rateLimit, { max: config.RATE_LIMIT_PER_MINUTE, timeWindow: '1 minute' });
   await app.register(sse, { heartbeatInterval: 15_000 });
@@ -86,12 +93,17 @@ export async function buildApp(config: Config): Promise<FastifyInstance> {
     secured.addHook('onRequest', async (req) => {
       const header = req.headers.authorization ?? '';
       const token = header.startsWith('Bearer ') ? header.slice(7) : '';
-      if (!token || !tokens.verify(token)) {
+      const claims = token ? tokens.verify(token) : null;
+      if (!claims) {
         throw new HttpError(
           401,
           'unauthorized',
           'Missing or expired token. Get one from POST /auth/token.',
         );
+      }
+      // A CMS token (ADR 0010) is for the agent only; the documents belong to the demo.
+      if (claims.iss !== 'demo' && req.url.split('?')[0] !== '/agent') {
+        throw new HttpError(403, 'forbidden', 'This token can only be used for POST /agent.');
       }
     });
     await secured.register(documentRoutes(repo, config.MAX_DOCUMENTS));

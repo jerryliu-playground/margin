@@ -86,7 +86,7 @@ Approval rules the session enforces:
 
 The panel never holds the model key. It calls `EditorHost.getAuthToken()` and sends the token as a bearer header. The server holds the model key from environment variables (ADR 0006).
 
-Tokens are signed and checked by `packages/agent-token` (Node only, ESLint keeps it out of browser code): a 15-minute HMAC token whose claims say which host asked (`iss`) and for which user (`sub`). The demo's `POST /auth/token` issues `iss: "demo"`; a CMS backend issues its own with the same secret (ADR 0010).
+Tokens are signed and checked by `packages/agent-token` (Node only, ESLint keeps it out of browser code): a 15-minute HMAC token whose claims say which host asked (`iss`) and for which user (`sub`). The demo's `POST /auth/token` issues `iss: "demo"`; a CMS backend issues its own with the same secret (ADR 0010). A token whose `iss` is not `demo` works only for `POST /agent`, and CORS allows the origins in `CMS_ORIGINS` for that route only.
 
 ## Document model
 
