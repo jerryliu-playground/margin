@@ -30,6 +30,7 @@ pnpm lint         # ESLint (includes boundary rules) + raw colour check (scripts
 pnpm format       # Prettier write (pnpm format:check to verify)
 pnpm test         # unit tests (Vitest)
 pnpm e2e          # Playwright (builds web, starts web + server with a mocked model)
+pnpm e2e:strapi   # Playwright against the example Strapi with the plugin (slow; own CI job, not in check)
 pnpm --filter @margin/server db:generate   # new SQL migration after editing apps/server/src/db/schema.ts
 docker build -t margin .                    # production image (CI builds and smoke-tests it)
 ```
