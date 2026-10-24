@@ -1,0 +1,25 @@
+{
+  "name": "@margin/example-strapi",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A local Strapi 5 project for developing and testing the Margin plugin (ADR 0010).",
+  "scripts": {
+    "develop": "node scripts/ensure-env.mjs && strapi develop",
+    "build": "strapi build",
+    "start": "node scripts/ensure-env.mjs && strapi start",
+    "strapi": "strapi"
+  },
+  "dependencies": {
+    "@strapi/strapi": "5.59.0",
+    "better-sqlite3": "13.0.3",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-router-dom": "6.30.6",
+    "styled-components": "6.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "@types/react": "18.3.31",
+    "@types/react-dom": "18.3.7"
+  }
+}

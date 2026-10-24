@@ -76,7 +76,15 @@ function boundaries(glob, patterns) {
 
 export default tseslint.config(
   {
-    ignores: ['**/dist/**', '**/coverage/**', 'playwright-report/**', 'test-results/**'],
+    ignores: [
+      '**/dist/**',
+      '**/coverage/**',
+      'playwright-report/**',
+      'test-results/**',
+      // Strapi regenerates these on every start.
+      'examples/strapi/.strapi/**',
+      'examples/strapi/types/generated/**',
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.strict,

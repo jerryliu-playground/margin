@@ -23,6 +23,7 @@ If a library's API is uncertain, check its current documentation instead of gues
 ```bash
 pnpm install
 pnpm dev          # web + server; the server reads apps/server/.env (e2e never does)
+pnpm dev:strapi   # the example Strapi project (examples/strapi) at http://localhost:1337/admin
 pnpm check        # typecheck + lint + format check + unit tests + e2e (must pass before you say a task is done)
 pnpm typecheck    # tsc --noEmit in every package
 pnpm lint         # ESLint (includes boundary rules) + raw colour check (scripts/check-colors.mjs)

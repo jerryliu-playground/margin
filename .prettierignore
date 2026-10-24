@@ -3,3 +3,8 @@ dist/
 coverage/
 playwright-report/
 test-results/
+# Strapi regenerates these (examples/strapi/.gitignore).
+examples/strapi/.strapi/
+examples/strapi/.strapi-updater.json
+examples/strapi/types/generated/
+examples/strapi/.tmp/

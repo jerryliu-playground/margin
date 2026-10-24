@@ -39,7 +39,7 @@ PR A (`phase-4` branch): fields.
 - [x] **P4.0 Plan and ADR 0010**: this plan and ADR 0010 (Strapi plugin: placement, token, packages, tests). `docs/`.
 - [x] **P4.1 `packages/agent-token`**: move token issue/verify out of `apps/server`; add `iss`/`sub` (decision 7). Workspace, `apps/server`.
 - [x] **P4.2 CORS for CMS admins**: `CMS_ORIGINS` (a comma-separated allowlist, empty by default) added to the agent routes' CORS. `apps/server`.
-- [ ] **P4.3 Example Strapi project**: `examples/strapi` with the Article type, SQLite, an `seo` component (metaTitle, metaDescription), a seed article and a local test admin from env; a `pnpm dev:strapi` script; Strapi versions pinned in ADR 0007. `examples/strapi`.
+- [x] **P4.3 Example Strapi project**: `examples/strapi` with the Article type, SQLite, an `seo` component (metaTitle, metaDescription), a seed article and a local test admin from env; a `pnpm dev:strapi` script; Strapi versions pinned in ADR 0007. `examples/strapi`.
 - [ ] **P4.4 Plugin skeleton**: `plugins/strapi` (via `@strapi/sdk-plugin`), the `POST /margin/token` admin route, and an empty side panel; unit test for the route. `plugins/strapi`.
 - [ ] **P4.5 Strapi `EditorHost` for fields**: schema mapping (pure, tested), a bridge from `useForm` values to `getState`/`subscribe`, and `applyFieldValue` through `onChange`; the agent panel in the side panel. The body is empty for now. `plugins/strapi`.
 - [ ] **P4.6 Strapi end-to-end test**: ask for a meta description, Accept, Save, and check the entry's value through the Strapi API; axe on the panel. `playwright.strapi.config.ts`, `pnpm e2e:strapi`, CI job. Docs: README section, architecture.md, CLAUDE.md commands.

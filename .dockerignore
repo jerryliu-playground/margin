@@ -8,3 +8,6 @@
 playwright-report
 test-results
 coverage
+# CMS plugins and their example projects are not part of the demo image.
+examples
+plugins

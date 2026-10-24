@@ -30,9 +30,10 @@ Pin exact versions (no `^`) for runtime and tooling.
 | Types           | @types/node, @types/react, @types/react-dom                                             | 24.19.2, 18.3.31, 18.3.7              | match Node 24 and React 18                                           |
 | Lint plugins    | @eslint/js, eslint-plugin-react-hooks, globals                                          | 10.0.1, 7.1.1, 17.13.0                | used by `eslint.config.js`                                           |
 | Test types      | @ai-sdk/provider (server dev)                                                           | 4.0.31                                | stream-part types for the mock model; must match `ai`'s own dep      |
+| CMS example     | @strapi/strapi; react-router-dom, styled-components (Strapi admin peers)                | 5.59.0; 6.30.6, 6.6.0                 | `examples/strapi` only (ADR 0010); better-sqlite3 13.0.3 as above    |
 | Test doubles    | rxjs (agent-panel, server dev); @ag-ui/client (server dev, for `verifyEvents` in tests) | 7.8.1                                 | same version @ag-ui/client uses; for the fake agent in tests         |
 
-**Supply-chain policy.** pnpm 12 refuses packages published less than a day ago (`minimumReleaseAge`). We keep the policy and pick a slightly older version instead of adding `minimumReleaseAgeExclude` entries. Only `esbuild` may run install scripts (`allowBuilds` in `pnpm-workspace.yaml`).
+**Supply-chain policy.** pnpm 12 refuses packages published less than a day ago (`minimumReleaseAge`). We keep the policy and pick a slightly older version instead of adding `minimumReleaseAgeExclude` entries. Only `esbuild` may run install scripts (`allowBuilds` in `pnpm-workspace.yaml`). Strapi's `@swc/core` and `core-js-pure` are listed as `false`: their scripts only check a prebuilt binary or print a banner.
 
 **TypeScript flags.** `apps/server` turns off `exactOptionalPropertyTypes`, because the AI SDK's `ToolSet` types reject valid tools with it on. Every other package keeps it.
 
