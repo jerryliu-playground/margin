@@ -200,13 +200,9 @@ export function AgentPanel({ host, agentUrl }: AgentPanelProps) {
             </button>
           ))}
         </div>
-        <form
-          className="margin-panel__form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            submit();
-          }}
-        >
+        {/* Not a <form>: hosts may render the panel inside their own form (Strapi's edit
+            view), where a nested form is ignored and Send would submit the host's form. */}
+        <div className="margin-panel__form">
           <label htmlFor={inputId} className="margin-panel__label">
             Message the agent
           </label>
@@ -221,14 +217,15 @@ export function AgentPanel({ host, agentUrl }: AgentPanelProps) {
               onKeyDown={onKeyDown}
             />
             <button
-              type="submit"
+              type="button"
               className="margin-panel__button margin-panel__button--primary"
               disabled={snapshot.running}
+              onClick={submit}
             >
               Send
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </aside>
   );
