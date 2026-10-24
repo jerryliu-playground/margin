@@ -46,7 +46,7 @@ PR A (`phase-4` branch): fields.
 
 PR B: the Blocks body.
 
-- [ ] **P4.7 Blocks ⇄ `BodyBlock`**: a pure converter covering paragraphs, headings, lists, quotes, code and images (alt text maps to `alternativeText`), with inline marks and links as Markdown; round-trip tests. Block ids are session-scoped (`b0`, `b1`, …) and protected by `baseHash`. `plugins/strapi`.
+- [x] **P4.7 Blocks ⇄ `BodyBlock`**: a pure converter covering paragraphs, headings, lists, quotes, code and images (alt text maps to `alternativeText`), with inline marks and links as Markdown; round-trip tests. Block ids are session-scoped (`b0`, `b1`, …) and protected by `baseHash`. `plugins/strapi`.
 - [ ] **P4.8 `applyBodyEdit` in Strapi**: wired through `onChange('body', …)`; e2e for a body edit and for image alt text after an accessibility check. `plugins/strapi`, `e2e/`.
 - [ ] **P4.9 Demo script**: add a Strapi segment to `docs/demo-script.md`; SPEC §7 marks Phase 4 done.
 
