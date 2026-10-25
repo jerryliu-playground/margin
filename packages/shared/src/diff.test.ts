@@ -25,6 +25,21 @@ describe('diffWords', () => {
     expect(join(parts, 'removed')).toBe(after);
   });
 
+  it('keeps a word that only gained punctuation after it', () => {
+    expect(diffWords('writing', 'writing, web, style')).toEqual([
+      { kind: 'same', text: 'writing' },
+      { kind: 'added', text: ', web, style' },
+    ]);
+  });
+
+  it('keeps hyphens and apostrophes inside words', () => {
+    expect(diffWords("don't re-read", "don't reread")).toEqual([
+      { kind: 'same', text: "don't " },
+      { kind: 'removed', text: 're-read' },
+      { kind: 'added', text: 'reread' },
+    ]);
+  });
+
   it('handles empty sides', () => {
     expect(diffWords('', 'New text')).toEqual([{ kind: 'added', text: 'New text' }]);
     expect(diffWords('Old', '')).toEqual([{ kind: 'removed', text: 'Old' }]);
