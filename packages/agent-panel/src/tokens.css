@@ -18,6 +18,8 @@
   --margin-color-accent: #3a46a8;
   --margin-color-accent-hover: #2e388a;
   --margin-color-accent-soft: #eceefa;
+  /* The accent as text (badges). Hosts whose button colour is too light for text set it apart. */
+  --margin-color-accent-text: var(--margin-color-accent);
   --margin-color-on-accent: #ffffff;
   --margin-color-focus: #3a46a8;
   --margin-color-success: #1a7f37;
