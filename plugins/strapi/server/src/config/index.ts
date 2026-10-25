@@ -14,7 +14,7 @@ export const marginConfigSchema = cmsPanelSettingsSchema.extend({
 export type MarginConfig = z.infer<typeof marginConfigSchema>;
 
 export default {
-  default: { agentUrl: 'http://localhost:8790', contentTypes: {} },
+  default: { agentUrl: 'http://localhost:8790' },
   validator(config: unknown) {
     const result = marginConfigSchema.safeParse(config);
     if (!result.success) {
