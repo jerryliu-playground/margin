@@ -17,7 +17,7 @@ export function createMarginHandlers(config: MarginConfig, now?: () => number) {
     settings(ctx: MarginContext) {
       const settings: CmsPanelSettings = {
         agentUrl: config.agentUrl,
-        contentTypes: config.contentTypes,
+        ...(config.contentTypes ? { contentTypes: config.contentTypes } : {}),
       };
       ctx.body = settings;
     },

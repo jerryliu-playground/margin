@@ -41,4 +41,12 @@ describe('Margin plugin routes', () => {
     createMarginHandlers(config).settings(ctx);
     expect(ctx.body).toEqual({ agentUrl: config.agentUrl, contentTypes: config.contentTypes });
   });
+
+  it('leaves contentTypes out when the config has none (every type, ADR 0011)', () => {
+    const ctx = context({ id: 1 });
+    createMarginHandlers({ agentUrl: config.agentUrl, tokenSecret: config.tokenSecret }).settings(
+      ctx,
+    );
+    expect(ctx.body).toEqual({ agentUrl: config.agentUrl });
+  });
 });
