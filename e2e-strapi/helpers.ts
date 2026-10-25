@@ -2,8 +2,6 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type APIRequestContext, type Page } from '@playwright/test';
 import { ADMIN } from '../playwright.strapi.config';
 
-const ARTICLES = '/content-manager/collection-types/api::article.article';
-
 /** Switches Strapi's guided tour off, so it never covers the page. */
 export async function hideGuidedTour(page: Page): Promise<void> {
   await page.addInitScript(() => {
@@ -63,28 +61,45 @@ const imageBlock = {
   children: [{ type: 'text', text: '' }],
 };
 
-/** Creates an article through Strapi's admin API, so each test owns its data. */
-export async function createArticle(
+const collection = (uid: string) => `/content-manager/collection-types/${uid}`;
+
+/** Paragraph blocks in Strapi's Blocks format. */
+export const paragraphs = (texts: string[]) =>
+  texts.map((text) => ({ type: 'paragraph', children: [{ type: 'text', text }] }));
+
+/** Creates an entry of any content type through Strapi's admin API; returns its documentId. */
+export async function createEntry(
   request: APIRequestContext,
-  data: ArticleData,
+  uid: string,
+  data: Record<string, unknown>,
 ): Promise<string> {
   const headers = { authorization: `Bearer ${await adminToken(request)}` };
-  const res = await request.post(ARTICLES, {
-    headers,
-    data: {
-      title: data.title,
-      seo: { metaTitle: '', metaDescription: '' },
-      body: [
-        ...data.paragraphs.map((text) => ({
-          type: 'paragraph',
-          children: [{ type: 'text', text }],
-        })),
-        ...(data.image ? [imageBlock] : []),
-      ],
-    },
-  });
+  const res = await request.post(collection(uid), { headers, data });
   expect(res.ok(), await res.text()).toBe(true);
   return ((await res.json()) as { data: { documentId: string } }).data.documentId;
+}
+
+/** The stored entry, as the Strapi admin API returns it. */
+export async function readEntry<T>(
+  request: APIRequestContext,
+  uid: string,
+  documentId: string,
+): Promise<T> {
+  const headers = { authorization: `Bearer ${await adminToken(request)}` };
+  const res = await request.get(`${collection(uid)}/${documentId}`, { headers });
+  return ((await res.json()) as { data: T }).data;
+}
+
+export const entryUrl = (uid: string, documentId: string) =>
+  `/admin${collection(uid)}/${documentId}`;
+
+/** Creates an article through Strapi's admin API, so each test owns its data. */
+export function createArticle(request: APIRequestContext, data: ArticleData): Promise<string> {
+  return createEntry(request, 'api::article.article', {
+    title: data.title,
+    seo: { metaTitle: '', metaDescription: '' },
+    body: [...paragraphs(data.paragraphs), ...(data.image ? [imageBlock] : [])],
+  });
 }
 
 export interface StoredArticle {
@@ -97,21 +112,23 @@ export interface StoredArticle {
 }
 
 /** The stored article, as the Strapi admin API returns it. */
-export async function readArticle(
+export function readArticle(
   request: APIRequestContext,
   documentId: string,
 ): Promise<StoredArticle> {
-  const headers = { authorization: `Bearer ${await adminToken(request)}` };
-  const res = await request.get(`${ARTICLES}/${documentId}`, { headers });
-  return ((await res.json()) as { data: StoredArticle }).data;
+  return readEntry(request, 'api::article.article', documentId);
 }
 
 /** The plain text of a stored paragraph. */
 export const paragraphText = (article: StoredArticle, index: number): string =>
-  (article.body[index]?.children ?? []).map((c) => c.text ?? '').join('');
+  blockText(article.body, index);
+
+/** The plain text of one stored block in a Blocks attribute. */
+export const blockText = (blocks: StoredArticle['body'], index: number): string =>
+  (blocks[index]?.children ?? []).map((c) => c.text ?? '').join('');
 
 export function editUrl(documentId: string): string {
-  return `/admin${ARTICLES}/${documentId}`;
+  return entryUrl('api::article.article', documentId);
 }
 
 /** The Margin agent panel inside Strapi's side panel. */

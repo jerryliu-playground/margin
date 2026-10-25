@@ -14,8 +14,19 @@ margin: {
   config: {
     agentUrl: env('MARGIN_AGENT_URL'),          // the Margin server
     tokenSecret: env('MARGIN_TOKEN_SECRET'),    // same value as on the Margin server
-    contentTypes: { 'api::article.article': { body: 'body' } },
   },
+},
+```
+
+Every content type the project defines gets the panel, including the ones editors build later, and the agent's body is the type's first Blocks attribute (ADR 0011). Fields come from each type's schema: text, long text, UID, and the same inside a single (non-repeatable) component such as `seo`. Relations, media, enumerations, Markdown rich text, repeatable components and dynamic zones are left out.
+
+To limit or adjust it, add `contentTypes` (an allowlist):
+
+```ts
+contentTypes: {
+  'api::article.article': {},                       // body: its first Blocks attribute
+  'api::product.product': { body: 'description' },  // name the body
+  'api::faq.faq': { body: false },                  // fields only
 },
 ```
 
