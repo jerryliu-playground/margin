@@ -37,3 +37,19 @@ test('document list has no axe violations', async ({ page }) => {
   const axe = await new AxeBuilder({ page }).analyze();
   expect(axe.violations, JSON.stringify(axe.violations, null, 2)).toEqual([]);
 });
+
+test('no content shows above the sticky document header', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Writing for the web' }).click();
+  const main = page.getByRole('main');
+  await expect(main.getByRole('link', { name: 'All documents' })).toBeVisible();
+  await main.evaluate((el) => el.scrollTo(0, 300));
+  await expect.poll(() => main.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+  // What sits at the top edge of the scrolling area is the header, which holds the link.
+  const headerAtTop = await main.evaluate((el) => {
+    const { left, top, width } = el.getBoundingClientRect();
+    const hit = document.elementFromPoint(left + width / 2, top + 2);
+    return Boolean(hit?.contains(el.querySelector('a')));
+  });
+  expect(headerAtTop).toBe(true);
+});

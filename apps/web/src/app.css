@@ -291,6 +291,19 @@ a:focus-visible {
   outline-offset: 2px;
 }
 
+/*
+ * Beside the panel, .page is the scroll container, and a sticky element stops short of its
+ * padding: content would show above the header. The header carries the top space instead.
+ */
+@media (min-width: 901px) {
+  .layout > .page {
+    padding-top: 0;
+  }
+  .doc-header {
+    margin-top: 0;
+  }
+}
+
 /* Narrow screens: tighter header to match the page padding. */
 @media (max-width: 900px) {
   h1 {
