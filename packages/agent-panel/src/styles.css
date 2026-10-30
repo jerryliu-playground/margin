@@ -308,6 +308,10 @@
   color: var(--margin-color-ins-text);
   text-decoration: none;
 }
+/* A replacement reads "old new", not "oldnew"; a margin, so the text itself is unchanged. */
+.margin-proposal__diff del + ins {
+  margin-left: 0.25em;
+}
 .margin-proposal__warning {
   margin: 0;
   color: var(--margin-color-warning);

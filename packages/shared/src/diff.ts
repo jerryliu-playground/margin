@@ -1,8 +1,12 @@
 export type DiffPart = { kind: 'same' | 'added' | 'removed'; text: string };
 
-/** Splits into words and the whitespace between them, so joining the parts restores the text. */
+/**
+ * Splits into words, whitespace and single punctuation marks, so joining the parts restores
+ * the text and "writing" still matches in "writing, web". Apostrophes, hyphens and
+ * underscores stay inside words.
+ */
 function tokenize(text: string): string[] {
-  return text.match(/\s+|[^\s]+/g) ?? [];
+  return text.match(/\s+|[\p{L}\p{N}'’_-]+|\S/gu) ?? [];
 }
 
 /**
