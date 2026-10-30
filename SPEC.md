@@ -202,7 +202,7 @@ Phases 4–5 start after Phase 3 is shipped (the video excepted, see above). Onl
 
 ## 9. Resume line (target)
 
-> **AI-assisted content editor** (React, TypeScript, AG-UI, Claude API): an in-editor agent that rewrites content, fills fields through frontend tool calls and shares editor state, with human-in-the-loop approval of every change. Built end to end with an agentic harness: context files, project skills, a knowledge base, and typed, tested, accessibility-checked CI with AI review.
+> **AI-assisted content editor** (React, TypeScript, AG-UI, Claude API): an in-editor agent that rewrites content, fills fields through frontend tool calls and shares editor state, with human-in-the-loop approval of every change. The same panel runs in a standalone editor and as a Strapi 5 plugin, on any content type. Built end to end with an agentic harness: context files, project skills, a knowledge base, and typed, tested, accessibility-checked CI with AI review.
 
 ## 10. Open questions (decide in Phase 0)
 
